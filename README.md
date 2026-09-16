@@ -13,67 +13,64 @@
 - addresses
 
 ### users
-- id 
-- name 
-- email
-- phone
-- pw_hash
-- is_admin
-- created_at
+- id (SERIAL, NOT NULL)
+- name (VARCHAR(50), NOT NULL)
+- email (VARCHAR(100), UNIQUE, NOT NULL)
+- phone (VARCHAR(20), UNIQUE, NOT NULL)
+- pw_hash (VARCHAR(255), NOT NULL)
+- is_admin (BOOLEAN, DEFAULT FALSE, NOT NULL)
+- created_at (TIMESTAMP, DEFAULT(NOW))
 
 ### categories
-- id
-- name
-- description
+- id (SERIAL, NOT NULL)
+- name (VARCHAR(50), NOT NULL)
+- description (TEXT)
 
 ### products
-- id
-- category_id
-- name
-- composition
-- weight
-- price
-- image
-- is_avialable
+- id (SERIAL, NOT NULL)
+- category_id (INTEGER, NOT NULL)
+- name (VARCHAR(100), NOT NULL)
+- description (TEXT)
+- composition (TEXT)
+- weight (NUMERIC(10, 2))
+- price (NUMERIC(10, 2), NOT NULL)
+- image (VARCHAR(255))
+- is_avialable (BOOLEAN, DEFAULT TRUE, NOT NULL)
 
 ### carts
-- id
-- user_id
-- created_at
+- id (SERIAL, NOT NULL)
+- user_id (INTEGER, UNIQUE, NOT NULL)
+- created_at (TIMESTAMP, DEFAULT NOW(), NOT NULL)
 
 ### cart_items
-- id
-- cart_id
-- product_id
-- quantity
+- id (SERIAL, NOT NULL)
+- cart_id (INTEGER, NOT NULL)
+- product_id (INTEGER, NOT NULL)
+- quantity (INTEGER, NOT NULL)
 
 ### orders
-- id
-- user_id
-- total_price
-- payment_method
-- delivery_price
-- comment
-- address_id
-- created_at
-- status
+- id (SERIAL, NOT NULL)
+- user_id (INTEGER, NOT NULL)
+- total_price (NUMERIC(10, 2), NOT NULL)
+- payment_method (VARCHAR(50), NOT NULL)
+- delivery_price (NUMERIC(10, 2), NOT NULL)
+- comment (TEXT)
+- address_id (INTEGER, NOT NULL)
+- created_at (TIMESTAMP, DEFAULT NOW(), NOT NULL)
+- status (VARCHAR(30), DEFAULT 'new', NOT NULL)
 
 ### order_items
-- id
-- order_id
-- product_id
-- quantity
-- price_at_moment
+- id (SERIAL, NOT NULL)
+- order_id (INTEGER, NOT NULL)
+- product_id (INTEGER, NOT NULL)
+- quantity (INTEGER, NOT NULL)
+- price_at_moment (NUMERIC(10, 2), NOT NULL)
 
 ### addresses
-- id
-- user_id
-- city
-- street
-- house
-- apartment
-- is_default
-
-
-
-
+- id (SERIAL, NOT NULL)
+- user_id (INTEGER, NOT NULL)
+- city (VARCHAR(30), NOT NULL)
+- street (VARCHAR(30), NOT NULL)
+- house (VARCHAR(10), NOT NULL)
+- apartment (VARCHAR(10))
+- is_default (BOOLEAN, DEFAULT FALSE, NOT NULL)
