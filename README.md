@@ -91,3 +91,45 @@
 ### N:M
 - carts <-> products (В корзине много товаров, товар для многих корзин)
 - orders <-> products (В заказе много товаров, товар для многих заказов)
+
+## Методы
+
+### Регистрация пользователя
+- POST /auth/register - Регистрация пользователя
+- POST /auth/login - Выдача токена
+- POST /auth/refresh - Обновление токена
+
+### Пользователь
+- GET /users/me - Получить свой профиль
+- PUT /users/me - Обновить свой профиль
+- GET /users/me/addresses - Получить свои адреса
+- POST /users/me/addresses - Добавить адрес
+- PUT /users/me/addresses/{id} - Обновить текущий адрес 
+- DELETE /users/me/addresses/{id} - Удалить адрес
+
+### Каталог
+- GET /categories - Показать все категории
+- GET /products - Показать все товары
+- GET /products/{id} - Показать один товар
+
+### Корзина
+- GET /cart - Смотреть свою корзину
+- POST /cart/items - Добавить товар в корзину
+- PUT /cart/items/{id} - Обновить количества товаров
+- DELETE /cart/items/{id} - Удалить товар из корзины
+
+### Заказы
+- POST /orders - Создать заказ из корзины
+- GET /orders - Смотреть свои заказы
+- GET /orders/{id} - Смотреть позиции заказа
+
+### Админка
+- POST /admin/categories - Создать категорию товаров
+- PUT /admin/categories/{id} - Обновить категорию
+- DELETE /admin/categories/{id} - Удалить категорию
+- POST /admin/products - Создать новый товар
+- PUT /admin/products/{id} - Обновить товар
+- DELETE /admin/products/{id} - Скрыть товар
+- GET /admin/users - Смотреть всех пользователей
+- GET /admin/orders - Смотреть все заказы
+- PUT /admin/orders/{id}/status - Изменить статус данного заказа
