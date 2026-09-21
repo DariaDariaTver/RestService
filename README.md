@@ -13,67 +13,83 @@
 - addresses
 
 ### users
-- id (SERIAL, NOT NULL)
-- name (VARCHAR(50), NOT NULL)
-- email (VARCHAR(100), UNIQUE, NOT NULL)
-- phone (VARCHAR(20), UNIQUE, NOT NULL)
-- pw_hash (VARCHAR(255), NOT NULL)
-- is_admin (BOOLEAN, DEFAULT FALSE, NOT NULL)
-- created_at (TIMESTAMP, DEFAULT(NOW))
+- id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+- name VARCHAR(100) NOT NULL
+- email VARCHAR(100) UNIQUE NOT NULL
+- phone VARCHAR(20) UNIQUE NOT NULL
+- pw_hash VARCHAR(255) NOT NULL
+- is_admin BOOLEAN DEFAULT FALSE 
+- created_at TIMESTAMP DEFAULT NOW()
+- updated_at TIMESTAMP DEFAULT NOW()
 
 ### categories
-- id (SERIAL, NOT NULL)
-- name (VARCHAR(50), NOT NULL)
-- description (TEXT)
+- id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+- name VARCHAR(100) UNIQUE NOT NULL
+- description TEXT
+- created_at TIMESTAMP DEFAULT NOW()
+- updated_at TIMESTAMP DEFAULT NOW()
 
 ### products
-- id (SERIAL, NOT NULL)
-- category_id (INTEGER, NOT NULL)
-- name (VARCHAR(100), NOT NULL)
-- description (TEXT)
-- composition (TEXT)
-- weight (NUMERIC(10, 2))
-- price (NUMERIC(10, 2), NOT NULL)
-- image (VARCHAR(255))
-- is_avialable (BOOLEAN, DEFAULT TRUE, NOT NULL)
+- id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+- category_id INTEGER NOT NULL REFERENCES categories(id)
+- name VARCHAR(100) NOT NULL
+- description TEXT
+- composition TEXT
+- weight NUMERIC(10, 2) CHECK (weight > 0)
+- price NUMERIC(10, 2) NOT NULL CHECK (price >= 0) 
+- image VARCHAR(255)
+- is_available BOOLEAN DEFAULT TRUE 
+- created_at TIMESTAMP DEFAULT NOW()
+- updated_at TIMESTAMP DEFAULT NOW()
 
 ### carts
-- id (SERIAL, NOT NULL)
-- user_id (INTEGER, UNIQUE, NOT NULL)
-- created_at (TIMESTAMP, DEFAULT NOW(), NOT NULL)
+- id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+- user_id INTEGER UNIQUE NOT NULL REFERENCES users(id)
+- created_at TIMESTAMP DEFAULT NOW()
+- updated_at TIMESTAMP DEFAULT NOW()
 
 ### cart_items
-- id (SERIAL, NOT NULL)
-- cart_id (INTEGER, NOT NULL)
-- product_id (INTEGER, NOT NULL)
-- quantity (INTEGER, NOT NULL)
+- id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+- cart_id INTEGER NOT NULL REFERENCES carts(id)
+- product_id INTEGER NOT NULL REFERENCES products(id)
+- quantity INTEGER NOT NULL
+- created_at TIMESTAMP DEFAULT NOW()
+- updated_at TIMESTAMP DEFAULT NOW()
+- UNIQUE (cart_id, product_id)
 
 ### orders
-- id (SERIAL, NOT NULL)
-- user_id (INTEGER, NOT NULL)
-- total_price (NUMERIC(10, 2), NOT NULL)
-- payment_method (VARCHAR(50), NOT NULL)
-- delivery_price (NUMERIC(10, 2), NOT NULL)
-- comment (TEXT)
-- address_id (INTEGER, NOT NULL)
-- created_at (TIMESTAMP, DEFAULT NOW(), NOT NULL)
-- status (VARCHAR(30), DEFAULT 'new', NOT NULL)
+- id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+- user_id INTEGER NOT NULL REFERENCES users(id)
+- subtotal NUMERIC(10, 2) NOT NULL CHECK (subtotal >= 0)
+- delivery_price NUMERIC(10, 2) NOT NULL CHECK (delivery_price >= 0)
+- total_price NUMERIC(10, 2) NOT NULL CHECK (total_price >= 0)
+- address_id INTEGER NOT NULL REFERENCES addresses(id)
+- status VARCHAR(30) DEFAULT 'new' NOT NULL
+- payment_method VARCHAR(50) NOT NULL
+- comment TEXT
+- created_at TIMESTAMP DEFAULT NOW()
+- updated_at TIMESTAMP DEFAULT NOW()
 
 ### order_items
-- id (SERIAL, NOT NULL)
-- order_id (INTEGER, NOT NULL)
-- product_id (INTEGER, NOT NULL)
-- quantity (INTEGER, NOT NULL)
-- price_at_moment (NUMERIC(10, 2), NOT NULL)
+- id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+- order_id INTEGER NOT NULL REFERENCES orders(id)
+- product_id INTEGER NOT NULL REFERENCES products(id)
+- quantity INTEGER NOT NULL CHECK (quantity > 0)
+- price_at_moment NUMERIC(10, 2) NOT NULL CHECK (price_at_moment >= 0) 
+- created_at TIMESTAMP DEFAULT NOW()
+- updated_at TIMESTAMP DEFAULT NOW()
+- UNIQUE (order_id, product_id)
 
 ### addresses
-- id (SERIAL, NOT NULL)
-- user_id (INTEGER, NOT NULL)
-- city (VARCHAR(30), NOT NULL)
-- street (VARCHAR(30), NOT NULL)
-- house (VARCHAR(10), NOT NULL)
-- apartment (VARCHAR(10))
-- is_default (BOOLEAN, DEFAULT FALSE, NOT NULL)
+- id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+- user_id INTEGER NOT NULL REFERENCES users(id)
+- city VARCHAR(30) NOT NULL
+- street VARCHAR(30) NOT NULL
+- house VARCHAR(10) NOT NULL
+- apartment VARCHAR(10)
+- is_default BOOLEAN DEFAULT FALSE 
+- created_at TIMESTAMP DEFAULT NOW()
+- updated_at TIMESTAMP DEFAULT NOW()
 
 ## Связи таблиц
 
