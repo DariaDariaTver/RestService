@@ -14,89 +14,108 @@
 - addresses
 
 ### roles
-- id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY
-- name VARCHAR(100) UNIQUE NOT NULL
-- created_at TIMESTAMP DEFAULT NOW()
-- updated_at TIMESTAMP DEFAULT NOW()
+| Поле | Тип | Ограничения | Описание |
+|---|---|---|---|
+| id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор роли |
+| name | VARCHAR(100) | UNIQUE, NOT NULL | Название роли (user, admin, manager, courier) |
+| created_at | TIMESTAMP | DEFAULT NOW() | Дата создания |
+| updated_at | TIMESTAMP | DEFAULT NOW() | Дата последнего обновления записи |
 
 ### users
-- id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY
-- role_id INTEGER NOT NULL REFERENCES roles(id)
-- name VARCHAR(100) NOT NULL
-- email VARCHAR(100) UNIQUE NOT NULL
-- phone VARCHAR(20) UNIQUE NOT NULL
-- pw_hash VARCHAR(255) NOT NULL 
-- created_at TIMESTAMP DEFAULT NOW()
-- updated_at TIMESTAMP DEFAULT NOW()
+| Поле | Тип | Ограничения | Описание |
+|---|---|---|---|
+| id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор пользователя |
+| role_id | INTEGER | NOT NULL, REFERENCES roles(id) | Роль пользователя |
+| name | VARCHAR(100) | NOT NULL | Имя пользователя |
+| email | VARCHAR(100) |UNIQUE, NOT NULL | Email пользователя |
+| phone | VARCHAR(20)| UNIQUE, NOT NULL | Номер телефона пользователя |
+| pw_hash | VARCHAR(255) | NOT NULL | Хеш пароля |
+| created_at | TIMESTAMP | DEFAULT NOW() | Дата создания записи | 
+| updated_at | TIMESTAMP | DEFAULT NOW() | Дата последнего обновления записи |
 
 ### categories
-- id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY
-- name VARCHAR(100) UNIQUE NOT NULL
-- description TEXT
-- created_at TIMESTAMP DEFAULT NOW()
-- updated_at TIMESTAMP DEFAULT NOW()
+| Поле | Тип | Ограничения | Описание |
+|---|---|---|---|
+| id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор категории |
+| name | VARCHAR(100) | UNIQUE, NOT NULL | Название категории |
+| description | TEXT | | Описание категории |
+| created_at | TIMESTAMP | DEFAULT NOW() | Дата создания записи |
+| updated_at | TIMESTAMP | DEFAULT NOW() | Дата последнего обновления записи |
 
 ### products
-- id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY
-- category_id INTEGER NOT NULL REFERENCES categories(id)
-- name VARCHAR(100) NOT NULL
-- description TEXT
-- composition TEXT
-- weight NUMERIC(10, 2) CHECK (weight > 0)
-- price NUMERIC(10, 2) NOT NULL CHECK (price >= 0) 
-- image VARCHAR(255) - ссылка на файл в папке
-- is_available BOOLEAN DEFAULT TRUE 
-- created_at TIMESTAMP DEFAULT NOW()
-- updated_at TIMESTAMP DEFAULT NOW()
+| Поле | Тип | Ограничения | Описание |
+|---|---|---|---|
+| id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор товара |
+| category_id | INTEGER | NOT NULL, REFERENCES categories(id) | Категория товара |
+| name | VARCHAR(100) | NOT NULL | Название блюда |
+| description | TEXT | | Описание блюда |
+| composition | TEXT | | Состав блюда |
+| weight | NUMERIC(10, 2) | CHECK (weight > 0) | Вес блюда |
+| price | NUMERIC(10, 2) | NOT NULL CHECK (price >= 0) | Цена блюда |
+| image | VARCHAR(255) | | Путь к файлу изображения |
+| is_available | BOOLEAN | DEFAULT TRUE | Флаг доступности товара в каталоге | 
+| created_at | TIMESTAMP | DEFAULT NOW() | Дата создания записи |
+| updated_at | TIMESTAMP | DEFAULT NOW() | Дата последнего обновления записи |
 
 ### carts
-- id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY
-- user_id INTEGER UNIQUE NOT NULL REFERENCES users(id)
-- created_at TIMESTAMP DEFAULT NOW()
-- updated_at TIMESTAMP DEFAULT NOW()
+| Поле | Тип | Ограничения | Описание |
+|---|---|---|---|
+| id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор корзины |
+| user_id | INTEGER | UNIQUE, NOT NULL, REFERENCES users(id) | Владелец корзины (у одного пользователя одна корзина)
+| created_at | TIMESTAMP | DEFAULT NOW() | Дата создания записи |
+| updated_at | TIMESTAMP | DEFAULT NOW() | Дата последнего обновления записи |
 
 ### cart_items
-- id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY
-- cart_id INTEGER NOT NULL REFERENCES carts(id)
-- product_id INTEGER NOT NULL REFERENCES products(id)
-- quantity INTEGER NOT NULL
-- created_at TIMESTAMP DEFAULT NOW()
-- updated_at TIMESTAMP DEFAULT NOW()
-- UNIQUE (cart_id, product_id)
+| Поле | Тип | Ограничения | Описание |
+|---|---|---|---|
+| id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор позиции в корзине |
+| cart_id | INTEGER | NOT NULL, REFERENCES carts(id) | Корзина |
+| product_id | INTEGER | NOT NULL, REFERENCES products(id) | Товар |
+| quantity | INTEGER | NOT NULL | Количество товара |
+| created_at | TIMESTAMP | DEFAULT NOW() | Дата создания записи |
+| updated_at | TIMESTAMP | DEFAULT NOW() | Дата последнего обновления записи |
+| - | - | UNIQUE (cart_id, product_id) | Один товар в корзине встречается только раз |
 
 ### orders
-- id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY
-- user_id INTEGER NOT NULL REFERENCES users(id)
-- subtotal NUMERIC(10, 2) NOT NULL CHECK (subtotal >= 0)
-- delivery_price NUMERIC(10, 2) NOT NULL CHECK (delivery_price >= 0)
-- total_price NUMERIC(10, 2) NOT NULL CHECK (total_price >= 0) - итоговая сумма (subtotal + delivery_price)
-- address_id INTEGER NOT NULL REFERENCES addresses(id)
-- status_id INTEGER NOT NULL REFERENCES order_statuses(id)
-- payment_method_id INTEGER NOT NULL REFERENCES payment_methods(id)
-- comment TEXT
-- created_at TIMESTAMP DEFAULT NOW()
-- updated_at TIMESTAMP DEFAULT NOW()
+| Поле | Тип | Ограничения | Описание |
+|---|---|---|---|
+| id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор заказа |
+| user_id | INTEGER | NOT NULL, REFERENCES users(id) | Клиент, который оформил заказ |
+| courier_id | INTEGER | REFERENCES users(id) | Курьер, назначенный на заказ |
+| subtotal | NUMERIC(10, 2) | NOT NULL, CHECK (subtotal >= 0) | Сумма товаров |
+| delivery_price | NUMERIC(10, 2) | NOT NULL, CHECK (delivery_price >= 0) | Стоимость доставки |
+| total_price | NUMERIC(10, 2) | NOT NULL, CHECK (total_price >= 0) | Итоговая сумма (subtotal + delivery_price) |
+| address_id | INTEGER | NOT NULL, REFERENCES addresses(id) | Адрес доставки |
+| status_id | INTEGER | NOT NULL, REFERENCES order_statuses(id) | Статус заказа |
+| payment_method_id | INTEGER | NOT NULL, REFERENCES payment_methods(id) | Способ оплаты |
+| comment | TEXT | | Комментарии к заказу |
+| created_at | TIMESTAMP | DEFAULT NOW() | Дата создания записи |
+| updated_at | TIMESTAMP | DEFAULT NOW() | Дата последнего обновления записи |
 
 ### order_items
-- id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY
-- order_id INTEGER NOT NULL REFERENCES orders(id)
-- product_id INTEGER NOT NULL REFERENCES products(id)
-- quantity INTEGER NOT NULL CHECK (quantity > 0)
-- price_at_moment NUMERIC(10, 2) NOT NULL CHECK (price_at_moment >= 0) 
-- created_at TIMESTAMP DEFAULT NOW()
-- updated_at TIMESTAMP DEFAULT NOW()
-- UNIQUE (order_id, product_id)
+| Поле | Тип | Ограничения | Описание |
+|---|---|---|---|
+| id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор позиции |
+| order_id | INTEGER | NOT NULL, REFERENCES orders(id) | Заказ |
+| product_id | INTEGER | NOT NULL, REFERENCES products(id) | Товар |
+| quantity | INTEGER | NOT NULL, CHECK (quantity > 0) | Количество товара |
+| price_at_moment | NUMERIC(10, 2) | NOT NULL, CHECK (price_at_moment >= 0) | Цена товара на момент оформления | 
+| created_at | TIMESTAMP | DEFAULT NOW() | Дата создания записи |
+| updated_at | TIMESTAMP | DEFAULT NOW() | Дата последнего обновления записи |
+| - | - | UNIQUE (order_id, product_id) | Один товар в заказе встречается только раз |
 
 ### addresses
-- id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY
-- user_id INTEGER NOT NULL REFERENCES users(id)
-- city VARCHAR(30) NOT NULL
-- street VARCHAR(30) NOT NULL
-- house VARCHAR(10) NOT NULL
-- apartment VARCHAR(10)
-- is_default BOOLEAN DEFAULT FALSE 
-- created_at TIMESTAMP DEFAULT NOW()
-- updated_at TIMESTAMP DEFAULT NOW()
+| Поле | Тип | Ограничения | Описание |
+|---|---|---|---|
+| id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор записи |
+| user_id | INTEGER | NOT NULL, REFERENCES users(id) | Владелец адреса |
+| city | VARCHAR(100) | NOT NULL | Город |
+| street | VARCHAR(150) | NOT NULL | Улица |
+| house | VARCHAR(20) | NOT NULL | Номер дома |
+| apartment | VARCHAR(20) | | Номер квартиры |
+| is_default | BOOLEAN | DEFAULT FALSE | Адрес доставки по умолчанию | 
+| created_at | TIMESTAMP | DEFAULT NOW() | Дата создания записи |
+| updated_at | TIMESTAMP | DEFAULT NOW() | Дата последнего обновления записи |
 
 
 ## Связи таблиц
