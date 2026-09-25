@@ -12,6 +12,9 @@
 - orders
 - order_items
 - addresses
+- order_statuses
+- payment_methods
+- refresh_tokens
 
 ### roles
 | Поле | Тип | Ограничения | Описание |
@@ -117,19 +120,48 @@
 | created_at | TIMESTAMP | DEFAULT NOW() | Дата создания записи |
 | updated_at | TIMESTAMP | DEFAULT NOW() | Дата последнего обновления записи |
 
+### order_statuses
+| Поле | Тип | Ограничения | Описание |
+|---|---|---|---|
+| id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AD IDENTITY | Уникальный идентификатор статуса заказа |
+| name | VARCHAR(50) | UNIQUE, NOT NULL | Название статуса (new, confirmed, preparing, delivering, completed, cancelled)
+| created_at | TIMESTAMP | DEFAULT NOW () | Дата создания записи |
+| updated_at | TIMESTAMP | DEFAULT NOW () | Дата последнего обновления записи |
+
+### payment_methods 
+| Поле | Тип | Ограничения | Описание |
+|---|---|---|---|
+| id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор способа оплаты |
+| name | VARCHAR(50) | UNIQUE, NOT NULL | Название способа оплаты (card, cash, online) | 
+| created_at | TIMESTAMP | DEFAULT NOW () | Дата создания записи |
+| updated_at | TIMESTAMP | DEFAULT NOW () | Дата последнего обновления записи |
+
+### refresh_tokens
+| Поле | Тип | Ограничения | Описание |
+|---|---|---|---|
+| id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор токена |
+| user_id | INTEGER | NOT NULL, REFERENCES users(id) | Владелец токена |
+| token | VARCHAR(500) | UNIQUE, NOT NULL | Сам токен |
+| expires_at | TIMESTAMP | NOT NULL | Дата истечения срока действия токена |
+| revoked | BOOLEAN | DEFAULT FALSE | Флаг отзыва при логауте |
+| created_at | TIMESTAMP | DEFAULT NOW() | Дата создания записи |
+| updated_at | TIMESTAMP | DEFAULT NOW() | Дата последнего обновления записи |
+
 
 ## Связи таблиц
 
 ### 1:N
 - users -> addresses (У пользователя много адресов, адрес принадлежит одному пользователю)
 - users -> orders (У одного пользователя много заказов, заказ на одного пользователя)
+- users -> orders(courier) (У одного курьера много заказов, у заказа один курьер)
 - categories -> products (В категории много товаров, для каждого одна категория)
 - carts -> cart_items (В корзине много товаров, товар для одной корзины)
 - orders -> order_items (В заказе несколько товаров, товар для конкретного заказа)
 - addresses -> orders (На один адрес много заказов, заказ на один адрес)
 - roles -> users (У роли много пользователей, у пользователя одна роль)
+- users -> refresh_tokens (У пользователя много токенов, токен на одного пользователя)
 - order_statuses -> orders (Один статус на много заказов, у заказа один статус)
-- payment_methods -> orders (Один метод оплаты на много заказов, у заказа один метод)
+- payment_methods -> orders (Один метод оплаты на много заказов, у заказа один метод оплаты)
 
 ### 1:1
 - users -> carts (У пользователя одна корзина, корзина для одного  пользователя)
@@ -152,7 +184,9 @@ CREATE INDEX idx_order_items_order_id ON order_items(order_id);
 CREATE INDEX idx_order_items_product_id ON order_items(product_id);
 CREATE INDEX idx_users_role_id ON users(role_id);
 CREATE INDEX idx_orders_status_id ON orders(status_id);
-CREATE INDEX idx_orders_payment_method_id ON orders(payment_method_id)
+CREATE INDEX idx_orders_payment_method_id ON orders(payment_method_id);
+CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id);
+CREATE INDEX idx_orders_courier_id ON orders(courier_id)
 ```
 
 ## Методы
