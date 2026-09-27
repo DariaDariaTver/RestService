@@ -192,79 +192,486 @@ CREATE INDEX idx_orders_courier_id ON orders(courier_id)
 ## Методы
 
 ### Регистрация пользователя
-- POST /auth/register - Регистрация пользователя
-  - Принимает: name, email, phone, password
-  - Возвращает: данные нового пользователя
-- POST /auth/login - Выдача токена
-  - Принимает: email, password
-  - Возвращает: access_token, refresh_token
-- POST /auth/refresh - Обновление токена
-  - Принимает: refresh_token
-  - Возвращает: новый access_token
+
+#### POST /auth/register - Регистрация пользователя
+
+**Запрос:**
+```json
+{
+  "name": "Дарья",
+  "email": "daria@mail.com",
+  "phone": "+79123456789",
+  "password": "password123"
+}
+```
+**Ответ(201):**
+```json
+{
+  "id": 22,
+  "name": "Дарья",
+  "email": "daria@mail.com",
+  "phone": "+79123456789",
+  "role_id": 1
+}
+```
+#### POST /auth/login - Выдача токена
+
+**Запрос:**
+```json
+{
+  "email": "daria@mail.com",
+  "password": "password123"
+}
+```
+**Ответ(200):**
+```json
+{
+  "access_token": "Ab3548fS...",
+  "refresh_token": "jD4333g...",
+  "token_type": "bearer"
+  }
+```
+#### POST /auth/refresh - Обновление токена
+
+**Запрос:**
+```json
+{
+  "refresh_token": "jD4333g...",
+}
+```
+**Ответ(200):**
+```json
+{
+  "access_token": "Ab3548fS..."
+}
+```
 
 ### Пользователь
-- GET /users/me - Получить свой профиль
-- PUT /users/me - Обновить свой профиль
-- GET /users/me/addresses - Получить свои адреса
-- POST /users/me/addresses - Добавить адрес
-- PUT /users/me/addresses/{id} - Обновить текущий адрес 
-- DELETE /users/me/addresses/{id} - Удалить адрес
+
+#### GET /users/me - Получить свой профиль
+
+**Ответ(200):**
+```json
+{
+  "id": 22,
+  "name": "Дарья",
+  "email": "daria@mail.com",
+  "phone": "+7123456789",
+  "role_id": 1
+}
+```
+
+#### PUT /users/me - Обновить свой профиль
+
+**Запрос:**
+```json
+{
+  "name": "Дарья",
+  "phone": "+7123456789"
+}
+```
+
+**Ответ(200):**
+```json
+{
+  "id": 22,
+  "name": "Дарья",
+  "email": "daria@mail.com",
+  "phone": "+712345789",
+  "role_id": 1
+}
+```
+
+#### GET /users/me/addresses - Получить свои адреса
+
+**Ответ(200):**
+```json
+[
+{
+  "id": 22,
+  "city": "Тверь",
+  "street": "Советская",
+  "house": "12",
+  "apartment": "34",
+  "is_default": true
+},
+{
+  "id": 23,
+  "city": "Тверь",
+  "street": "Фарафоновой",
+  "house": "35",
+  "apartment": null,
+  "is_default": false
+}
+]
+```
+#### POST /users/me/addresses - Добавить адрес
+
+**Запрос:**
+```json
+{
+  "city": "Тверь",
+  "street": "Фарафоновой",
+  "house": "35",
+  "apartment": "12",
+  "is_default": false
+}
+```
+**Ответ(200):**
+```json
+{
+  "id": 24,
+  "city": "Тверь",
+  "street": "Фарафоновой",
+  "house": "35",
+  "apartment": "12",
+  "is_default": false
+}
+```
+
+#### PUT /users/me/addresses/{id} - Обновить текущий адрес 
+
+**Запрос:**
+```json
+{
+  "city": "Тверь",
+  "street": "Фарафоновой",
+  "house": "35",
+  "apartment": "35",
+  "is_default": true
+}
+```
+
+**Ответ(200):**
+```json
+{
+  "id": 23,
+  "city": "Тверь",
+  "street": "Фарафоновой",
+  "house": "35",
+  "apartment": "35",
+  "is_default": true
+}
+```
+
+#### DELETE /users/me/addresses/{id} - Удалить адрес
+
+**Параметр пути:**
+- id(int) - id адреса для удаления 
+
+**Ответ(204)**
 
 ### Каталог
-- GET /categories - Показать все категории
-  - Параметры: search, limit, offset
 
-- GET /products - Показать все товары
-  - Параметры: category_id, search, min_price, max_price, sort_by, order, limit, offset
-  - Пример: GET /products?category_id=3&limit=20&offset=0
-- GET /products/{id} - Показать один товар
+#### GET /categories - Показать все категории
+
+**Параметры:**
+- search(str) - поиск по названию 
+- limit(int) - количество записей
+- offset(int) - пропустить
+
+**Пример запроса:**
+GET /categories?search=суп&limit=20&offset=0
+
+**Ответ(200):**
+```json
+{
+  "items": [
+    {"id": 1, "name": "Супы", "description": "Первые блюда"},
+    {"id": 2, "name": "Горячее", "description": "Вторые блюда"}
+  ],
+  "total": 5,
+  "limit": 20,
+  "offset": 0,
+  "pages": 1
+}
+```
+
+#### GET /products - Показать все товары
+
+**Параметры:**
+- category_id(int) - фильтр по категории
+- search(str) - поиск по названию
+- min_price(float) - минимальная цена
+- max_price(float) - максимальная цена 
+- sort_by(str) - сортировка
+- order(str) - направление
+- limit(int) - количество записей
+- offset(int) - пропустить 
+
+**Пример запроса:**
+GET /products?category_id=3&limit=20&offset=0
+
+**Ответ(200):**
+```json
+{
+  "items": [
+    {
+      "id": 11,
+      "name": "Борщ",
+      "price": 350.00,
+      "is_available": true,
+      "category_id": 3
+    },
+    {
+      "id": 12,
+      "name": "Пельмени домашние",
+      "price": 300.00,
+      "is_avaiable": true,
+      "category_id": 4
+    }
+  ],
+  "total": 45,
+  "limit": 20,
+  "offset": 0,
+  "pages": 3
+}
+```
+
+#### GET /products/{id} - Показать один товар
+
+**Параметр пути:**
+- id(int) - id товара
+
+**Ответ(200):**
+```json
+{
+  "id": 11,
+  "name": "Борщ",
+  "description": "С говядиной и сметаной",
+  "composition": "Свекла, капуста, мясо, сметана",
+  "price": 350.00,
+  "weight": 300.00,
+  "image": "/static/images/borsch.jpg",
+  "is_available": true,
+  "category_id": 3
+}
+```
 
 ### Корзина
-- GET /cart - Смотреть свою корзину
-  - Возвращает: корзину с товарами
-- POST /cart/items - Добавить товар в корзину
-  - Принимает: product_id, quantity
-  - Возвращает: обновленную корзину
-- PUT /cart/items/{id} - Обновить количества товаров
-  - Принимает: quantity
-  - Возвращает: новое количество товаров 
-- DELETE /cart/items/{id} - Удалить товар из корзины
-  - Возвращает: обновленную корзину 
+
+#### GET /cart - Смотреть свою корзину
+
+**Ответ(200):**
+```json
+{
+  "id": 1,
+  "items": [
+    {
+      "product_id": 11,
+      "name": "Борщ",
+      "quantity": 2,
+      "price": 350.00
+    },
+    {
+      "product_id": 27,
+      "name": "Пельмени домашние",
+      "quantity": 1,
+      "price": 300.00
+    }
+  ],
+  "total": 1000.00
+}
+```
+
+#### POST /cart/items - Добавить товар в корзину
+
+**Запрос:**
+```json
+{
+  "product_id": 11,
+  "quantity": 2
+}
+```
+
+**Ответ(201):**
+```json
+{
+  "id": 1,
+  "items": [
+    {
+      "product_id": 11,
+      "name": "Борщ",
+      "quantity": 2,
+      "price": 350.00,
+    }
+  ],
+  "total": 700.00
+}
+```
+
+#### PUT /cart/items/{id} - Обновить количества товаров
+
+**Параметр пути:**
+- id(int) - id товара в корзине
+
+**Запрос:**
+```json
+{
+  "quantity": 3
+}
+```
+
+**Ответ(200):**
+```json
+{
+  "id": 1,
+  "items": [
+    {
+      "product_id": 11,
+      "name": "Борщ",
+      "quantity": 3,
+      "price": 350.00
+    }
+  ],
+  "total": 1050.00
+}
+```
+
+#### DELETE /cart/items/{id} - Удалить товар из корзины
+
+**Параметр пути:**
+- id(int) - id товара в корзине
+
+**Ответ(204)**
 
 ### Заказы
-- POST /orders - Создать заказ из корзины
-  - Принимает: address_id, payment_method, comment
-  - Возвращает: созданный заказ 
-- GET /orders - Смотреть свои заказы
-  - Параметры: status, sort_by, order, limit, offset
-  - Возвращает: список заказов
-- GET /orders/{id} - Смотреть позиции заказа
-  - Возвращает: заказ с его характеристиками 
+
+#### POST /orders - Создать заказ из корзины
+
+**Запрос:**
+```json
+{
+  "address_id": 5,
+  "payment_method_id": 1,
+  "comment": "Домофон не работает, позвонить за 10 минут до приезда"
+}
+```
+
+**Ответ(201):**
+```json
+{
+  "id": 148,
+  "user_id": 23,
+  "status": "new",
+  "subtotal": 1150.00,
+  "delivery_price": 100.00,
+  "total_price": 1250.00,
+  "address": {
+    "id": 5,
+    "city": "Тверь",
+    "street": "Советская",
+    "house": "12",
+    "apartment": "34"
+  },
+  "payment_method_id": 1,
+  "comment": "Домофон не работает, позвонить за 10 минут до приезда",
+  "imems": [
+    {
+      "product_id": 11,
+      "name": "Борщ",
+      "quantity": 1,
+      "price_at_moment": 350.00
+    },
+    {
+      "product_id": 27,
+      "name": "Пельмени домашние",
+      "quantity": 2,
+      "price_at_moment": 300.00
+    },
+    {
+      "product_id": 42,
+      "name": "Морс клюквенный",
+      "quantity": 1,
+      "price_at_moment": 200.00
+    }
+  ],
+  "created_at": "2026-09-27T14:32:00Z"
+}
+```
+#### GET /orders - Смотреть свои заказы
+
+**Параметры:**
+- status(str) - фильтр по статусу
+- sort_by(str) - сортировка
+- order(str) - направление
+- limit(int) - количество записей
+- offset(int) - пропуск
+
+**Пример запроса:**
+GET /orders?status=delivering&limit=20&offset=0
+
+**Ответ(200):**
+```json
+{
+  "items": [
+    {
+      "id": 148,
+      "status": "delivering",
+      "total_price": 1250.00,
+      "created_at": "2026-09-24T14:32:00Z"
+    }
+  ],
+  "total": 12,
+  "limit": 20,
+  "offset": 0,
+  "pages": 1
+}
+```
+
+#### GET /orders/{id} - Смотреть позиции заказа
+
+**Параметр пути:**
+-id(int) - id заказа
+
+**Ответ(200):**
+```json
+{
+  "id": 148,
+  "user_id": 23,
+  "status": "new",
+  "subtotal": 1150.00,
+  "delivery_price": 100.00,
+  "total_price": 1250.00,
+  "address": {
+    "id": 5,
+    "city": "Тверь",
+    "street": "Советская",
+    "house": "12",
+    "apartment": "34"
+    },
+  "payment_method_id": 1,
+  "comment": "Домофон не работает",
+  "items": [
+  {
+  "product_id": 11,
+  "name": "Борщ",
+  "quantity": 1,
+  "price_at_moment": 350.00
+    }
+  ],
+  "created_at": "2026-09-27T14:32:00Z"
+}
+```
 
 ### Админка
 - POST /admin/categories - Создать категорию товаров
-  - Принимает: name, description
-  - Возвращает: созданную категорию
+
 - PUT /admin/categories/{id} - Обновить категорию
-  - Принимает: name, description
-  - Возвращает: обновленную категорию 
+
 - DELETE /admin/categories/{id} - Удалить категорию
-  - Возвращает: информацию об удалении 
+
 - POST /admin/products - Создать новый товар
-  - Принимает: name, description, price, weight, image, category_id
-  - Возвращает: новый товар
+
 - PUT /admin/products/{id} - Обновить товар
-  - Принимает: name, description, price, weight, image, category_id
-  - Возвращает: обновленный товар
+
 - DELETE /admin/products/{id} - Скрыть товар
-  - Возвращает: сообщение об удалении
+
 - GET /admin/users - Смотреть всех пользователей
-  - Параметры: search, role_id, limit, offset
+
 - GET /admin/orders - Смотреть все заказы
-  - Параметры: status, user_id, date_from, date_to, sort_by, order, limit, offset
+
 - PUT /admin/orders/{id}/status - Изменить статус данного заказа
-  - Принимает: status_id
-  - Возвращает: обновленный статус 
 
 ## Справочник
 
