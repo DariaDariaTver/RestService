@@ -123,7 +123,7 @@
 ### order_statuses
 | Поле | Тип | Ограничения | Описание |
 |---|---|---|---|
-| id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AD IDENTITY | Уникальный идентификатор статуса заказа |
+| id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор статуса заказа |
 | name | VARCHAR(50) | UNIQUE, NOT NULL | Название статуса (new, confirmed, preparing, delivering, completed, cancelled)
 | created_at | TIMESTAMP | DEFAULT NOW () | Дата создания записи |
 | updated_at | TIMESTAMP | DEFAULT NOW () | Дата последнего обновления записи |
@@ -236,7 +236,7 @@ CREATE INDEX idx_orders_courier_id ON orders(courier_id)
 **Запрос:**
 ```json
 {
-  "refresh_token": "jD4333g...",
+  "refresh_token": "jD4333g..."
 }
 ```
 **Ответ(200):**
@@ -493,7 +493,7 @@ GET /products?category_id=3&limit=20&offset=0
       "product_id": 11,
       "name": "Борщ",
       "quantity": 2,
-      "price": 350.00,
+      "price": 350.00
     }
   ],
   "total": 700.00
@@ -566,7 +566,7 @@ GET /products?category_id=3&limit=20&offset=0
   },
   "payment_method_id": 1,
   "comment": "Домофон не работает, позвонить за 10 минут до приезда",
-  "imems": [
+  "items": [
     {
       "product_id": 11,
       "name": "Борщ",
@@ -586,7 +586,7 @@ GET /products?category_id=3&limit=20&offset=0
       "price_at_moment": 200.00
     }
   ],
-  "created_at": "2026-09-27T14:32:00Z"
+  "created_at": "2026-09-27T22:00:00Z"
 }
 ```
 #### GET /orders - Смотреть свои заказы
@@ -609,7 +609,7 @@ GET /orders?status=delivering&limit=20&offset=0
       "id": 148,
       "status": "delivering",
       "total_price": 1250.00,
-      "created_at": "2026-09-24T14:32:00Z"
+      "created_at": "2026-09-24T22:00:00Z"
     }
   ],
   "total": 12,
@@ -650,28 +650,301 @@ GET /orders?status=delivering&limit=20&offset=0
   "price_at_moment": 350.00
     }
   ],
-  "created_at": "2026-09-27T14:32:00Z"
+  "created_at": "2026-09-27T22:00:00Z"
 }
 ```
 
 ### Админка
-- POST /admin/categories - Создать категорию товаров
 
-- PUT /admin/categories/{id} - Обновить категорию
+#### POST /admin/categories - Создать категорию товаров
 
-- DELETE /admin/categories/{id} - Удалить категорию
+**Запрос:**
+```json
+{
+  "name": "Супы",
+  "description": "Первые блюда"
+}
+```
 
-- POST /admin/products - Создать новый товар
+**Ответ(201):**
+```json
+{
+  "id": 123,
+  "name": "Супы",
+  "description": "Первые блюда",
+  "created_at": "2026-09-28T22:00:00Z"
+}
+```
 
-- PUT /admin/products/{id} - Обновить товар
+#### PUT /admin/categories/{id} - Обновить категорию
 
-- DELETE /admin/products/{id} - Скрыть товар
+**Параметр пути:**
+- id(int) - id категории
 
-- GET /admin/users - Смотреть всех пользователей
+**Запрос:**
+```json 
+{
+  "name": "Горячие супы",
+  "description": "Борщ, солянка, суп-пюре"
+}
+```
 
-- GET /admin/orders - Смотреть все заказы
+**Ответ(200):**
+```json
+{
+  "id": 123,
+  "name": "Горячие супы",
+  "description": "Борщ, солянка, суп-пюре",
+  "updated_at": "2026-09-28T22:00:00Z"
+}
+```
 
-- PUT /admin/orders/{id}/status - Изменить статус данного заказа
+#### DELETE /admin/categories/{id} - Удалить категорию
+
+**Параметр пути:**
+- id(int) - id категории
+
+**Ответ(204)**
+
+#### POST /admin/products - Создать новый товар
+
+**Запрос:**
+```json
+{
+  "name": "Борщ",
+  "description": "С говядиной и сметаной",
+  "composition": "Свекла, капуста, мясо, сметана",
+  "price": 350.00,
+  "weight": 300.00,
+  "category_id": 3,
+  "image": "/static/images/borsch.jpg"
+}
+```
+
+**Ответ(201):**
+```json
+{
+  "id": 11,
+  "name": "Борщ",
+  "description": "С говядиной и сметаной",
+  "composition": "Свекла, капуста, мясо, сметана",
+  "price": 350.00,
+  "weight": 300.00,
+  "category_id": 3,
+  "image": "/static/images/borsch.jpg",
+  "is_available": true,
+  "created_at": "2026-09-28T22:00:00Z"
+}
+```
+
+#### PUT /admin/products/{id} - Обновить товар
+
+**Параметр пути:**
+- id(int) - id товара
+
+**Запрос:**
+```json
+{
+  "name": "Борщ Тверской",
+  "description": "С говядиной, сметаной и пампушками",
+  "composition": "Свекла, капуста, мясо, сметана, чеснок",
+  "price": 400.00,
+  "weight": 350.00,
+  "category_id": 3,
+  "image": "/static/images/borsch_new.jpg"
+}
+```
+
+**Ответ(200):**
+```json
+{
+  "id": 11,
+  "name": "Борщ Тверской",
+  "description": "С говядиной, сметаной и пампушками",
+  "composition": "Свекла, капуста, мясо, сметана, чеснок",
+  "price": 400.00,
+  "weight": 350.00,
+  "category_id": 3,
+  "image": "/static/images/borsch_new.jpg",
+  "is_available": true,
+  "updated_at": "2026-09-28T22:00:00Z"
+}
+```
+
+#### PATCH /admin/products/{id}/availability - Скрыть товар
+
+**Параметр пути:**
+- id(int) - id товара 
+
+**Запрос:**
+```json
+{
+  "is_available": false
+}
+```
+
+**Ответ(200):**
+```json
+{
+  "id": 11,
+  "name": "Борщ Тверской",
+  "is_available": false,
+  "updated_at": "2026-09-28T22:00:00Z"
+}
+```
+
+#### GET /admin/users - Смотреть всех пользователей
+
+**Параметры:**
+- search(str) - поиск пользователя по данным
+- role_id(id) - фильтр по роли
+- limit(int) - количество записей
+- offset(int) - пропустить 
+
+**Пример запроса:**
+GET /admin/users?role_id=2&limit=20&offset=0
+
+**Ответ(200):**
+```json
+{
+  "items": [
+    {
+      "id": 23,
+      "name": "Дарья",
+      "email": "daria@mail.com",
+      "phone": "+79123456789",
+      "role_id": 1,
+      "created_at": "2026-09-28T22:00:00Z"
+    }
+  ],
+  "total": 154,
+  "limit": 20,
+  "offset": 0,
+  "pages": 8
+}
+```
+
+#### GET /admin/orders - Смотреть все заказы
+
+**Параметры:**
+- status(str) - фильтр по статусу
+- user_id(int) -  фильтр по клиенту
+- date_from(date) - заказы с даты ... (формат YYYY-MM-DD)
+- date_to(date) - заказы по дату ... (формат YYYY-MM-DD)
+- sort_by(str) - сортировка по дате, сумме заказов
+- order(str) - направление
+- limit(int) - количество записей
+- offset(int) - пропустить
+
+**Пример запроса:**
+GET /admin/orders?status=new&limit=20&offset=0
+
+**Ответ(200):**
+```json
+{
+  "items": [
+    {
+      "id": 148,
+      "user_id": 23,
+      "courier_id": null,
+      "status": "new",
+      "total_price": 1250.00,
+      "created_at": "2026-09-28T22:00:00Z"
+    }
+  ],
+  "total": 3,
+  "limit": 20,
+  "offset": 0,
+  "pages": 1
+}
+```
+
+#### PUT /admin/orders/{id}/status - Изменить статус данного заказа
+
+**Параметр пути:**
+- id(int) - id заказа
+
+**Запрос:**
+```json
+{
+  "status_id": 2
+}
+```
+
+**Ответ(200):**
+```json
+{
+  "id": 148,
+  "status": "confirmed",
+  "updated_at": "2026-09-28T22:00:00Z"
+}
+```
+
+#### PUT /admin/orders/{id}/courier - Назначить курьера
+
+**Параметр пути:**
+- id(int) - id заказа
+
+**Запрос:**
+```json
+{
+  "courier_id": 42
+}
+```
+
+**Ответ(200):**
+```json
+{
+  "id": 148,
+  "courier_id": 42,
+  "status": "delivering",
+  "updated_at": "2026-09-28T22:00:00Z"
+}
+```
+
+### Курьер
+
+#### GET /courier/orders - Мои назначенные доставки
+
+**Ответ:**
+```json
+{
+  "items": [
+    {
+      "id": 148,
+      "status": "delivering",
+      "total_price": 1250.00,
+      "address": {
+        "city": "Тверь",
+        "street": "Фарафоновой",
+        "house": "35",
+        "apartment": "33",
+      },
+      "created_at": "2026-09-24T22:00:00Z"
+    }
+  ]
+}
+```
+#### PUT /courier/orders/{id}/status - Отметить заказ доставленный
+
+**Параметр пути:**
+- id(int) - id заказа
+
+**Запрос:**
+```json
+{
+  "status_id": 5
+}
+```
+
+**Ответ(200)**
+```json
+{
+  "id": 148,
+  "status": "completed",
+  "updated_at": "2026-09-28T22:00:00Z"
+}
+```
 
 ## Справочник
 
