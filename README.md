@@ -925,7 +925,7 @@ GET /admin/orders?status=new&limit=20&offset=0
   ]
 }
 ```
-#### PUT /courier/orders/{id}/status - Отметить заказ доставленный
+#### PUT /courier/orders/{id}/status - Отметить заказ доставленным
 
 **Параметр пути:**
 - id(int) - id заказа
