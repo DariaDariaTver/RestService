@@ -13,11 +13,7 @@ class User(Base):
     phone = Column(String(20), unique=True, nullable=False)
     pw_hash = Column(String(255), nullable=False)
     created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(
-        DateTime, 
-        server_default=func.now(),
-        onupdate=func.now()
-    )
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     role = relationship("Role", back_populates="users")
     addresses = relationship("Address", back_populates="user")

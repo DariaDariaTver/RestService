@@ -9,11 +9,6 @@ class Role(Base):
     id = Column(Integer, Identity(always=True), primary_key=True)
     name = Column(String(100), unique=True, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(
-        DateTime,
-        nullable=False,
-        server_default=func.now(),
-        onupdate=func.now()
-        )
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     users = relationship("User", back_populates="role")

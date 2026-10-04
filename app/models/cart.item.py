@@ -11,11 +11,7 @@ class CartItem(Base):
     cart_id = Column(Integer, ForeignKey("carts.id"), nullable=False)
     quantity = Column(Integer, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(
-        DateTime,
-        server_default=func.now(),
-        onupdate=func.now()
-    )
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     cart = relationship("Cart", back_populates="items")
     product = relationship("Product")
