@@ -1,5 +1,10 @@
 from fastapi import FastAPI
 from app.database import engine, Base
+from app.models import (
+    Role, User, Product, Cart, CartItem, 
+    Order, OrderStatus, PaymentMethod, Address,
+    RefreshToken, Category, OrderItem
+    )
 
 app = FastAPI(
     title="Restaurant API",
