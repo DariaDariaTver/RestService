@@ -14,5 +14,5 @@ class OrderItem(Base):
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
-    order_id = relationship("Order", back_populates="items")
-    product_id = relationship("Product")
+    order = relationship("Order", back_populates="items")
+    product = relationship("Product")
