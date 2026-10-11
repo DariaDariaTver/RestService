@@ -29,3 +29,12 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
             detail="User not found"
         )
     return user
+
+def require_role(role_name: str):
+    def role_checker(user: User = Depends(get_current_user)) -> User:
+        if user.role.name != role_name:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                                detail=f"Role'{role_name}' required")
+        return user
+    return role_checker
+    
