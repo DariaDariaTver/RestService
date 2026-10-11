@@ -10,6 +10,7 @@ security_scheme = HTTPBearer()
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security_scheme),
                     db: Session = Depends(get_db)) -> User:
+    """Получить текущего пользователя из токена."""
     token = credentials.credentials
     payload = decode_token(token)
     if payload is None:
@@ -31,6 +32,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     return user
 
 def require_role(role_name: str):
+    """Проверка роли пользователя."""
     def role_checker(user: User = Depends(get_current_user)) -> User:
         if user.role.name != role_name:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
