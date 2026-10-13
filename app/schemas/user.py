@@ -31,5 +31,3 @@ class UserUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=100)
     phone: str | None = Field(default=None, min_length=5, max_length=20)
     email: EmailStr | None = None
-
-    model_config = ConfigDict(from_attributes=True)
