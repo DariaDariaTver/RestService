@@ -16,8 +16,8 @@ class Order(Base):
     payment_method_id = Column(Integer, ForeignKey("payment_methods.id"), nullable=False)
     comment = Column(Text, nullable=True)
     status_id = Column(Integer, ForeignKey("order_statuses.id"), nullable=False)
-    created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     user = relationship("User", foreign_keys=[user_id], back_populates="orders")
     courier = relationship("User", foreign_keys=[courier_id], back_populates="courier_orders")
