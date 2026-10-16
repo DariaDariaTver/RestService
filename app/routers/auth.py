@@ -98,12 +98,12 @@ def get_me(user: User = Depends(get_current_user)):
 
 @router.post("/refresh", status_code=200)
 def update_refresh_token(data: RefreshRequest, db: Session = Depends(get_db)):
-    """Обновить access через refresh."""
+    """Обновить пару токенов: access и refresh."""
     payload = decode_token(data.refresh_token)
     if payload is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not payload"
+            detail="Invalid or expired token"
         )
     if payload.get("type") != "refresh":
         raise HTTPException(
@@ -128,11 +128,31 @@ def update_refresh_token(data: RefreshRequest, db: Session = Depends(get_db)):
         )
 
     user_id = int(payload["sub"])
+    token_save.revoked = True
+    new_refresh = create_refresh_token(user_id)
+    new_token_save = RefreshToken(
+        user_id=user_id,
+        token=new_refresh,
+        expires_at=datetime.now(timezone.utc) + timedelta(
+            days=settings.REFRESH_TOKEN_EXPIRE_DAYS
+        ),
+    )
+    db.add(new_token_save)
+    db.commit()
+
     new_access = create_access_token(user_id)
+
     return {
         "access_token": new_access,
-        "token_type": "bearer",
+        "refresh_token": new_refresh,
+        "token_type": "bearer"
     }
-    
-    
+
+@router.post("/logout", status_code=204)
+def logout(data: RefreshRequest, db: Session = Depends(get_db)):
+    """Выйти из системы."""
+    token_save = db.query(RefreshToken).filter(RefreshToken.token == data.refresh_token).first()
+    if token_save:
+        token_save.revoked = True
+        db.commit()
     
