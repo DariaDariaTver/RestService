@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 import bcrypt
 import jwt
+import uuid
 
 from app.config import settings
 
@@ -26,7 +27,8 @@ def create_access_token(user_id: int) -> str:
     payload = {
         "sub": str(user_id),
         "exp": expires_at,
-        "type": "access"
+        "type": "access",
+        "jti": uuid.uuid4().hex,
     }
     return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
@@ -38,7 +40,8 @@ def create_refresh_token(user_id: int) -> str:
     payload = {
         "sub": str(user_id),
         "exp": expires_at,
-        "type": "refresh"
+        "type": "refresh",
+        "jti": uuid.uuid4().hex,
     }
     return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
