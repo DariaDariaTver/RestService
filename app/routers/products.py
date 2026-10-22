@@ -12,16 +12,25 @@ router = APIRouter(prefix="/products", tags=["products"])
 @router.get("/", response_model=list[ProductRead])
 def list_products(
     category_id: int | None = None,
-    db: Session = Depends(get_db)
+    search: str | None = None,
+    only_available: bool = True,
+    skip: int = 0,
+    limit: int = 20,
+    db: Session = Depends(get_db),
     ):
     if category_id is None:
         first_category = db.query(Category).order_by(Category.sort).first()
         if first_category:
             category_id = first_category.id
-            if category_id:
-                return db.query(Product).filter(Product.category_id == category_id).all()
-            return []
-
+    if not category_id:
+        return []
+    query = db.query(Product).filter(Product.category_id == category_id)
+    if search:
+        query = query.filter(Product.name.ilike(f"%{search}%"))
+    if only_available:
+        query = query.filter(Product.is_available == True)
+    return query.offset(skip).limit(limit).all()
+            
 @router.get("/{product_id}", response_model=ProductRead)
 def get_product(product_id: int, db: Session = Depends(get_db)):
     product = db.query(Product).filter(Product.id == product_id).first()
