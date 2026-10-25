@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Response
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
@@ -6,6 +6,7 @@ from app.models.category import Category
 from app.models.product import Product
 from app.schemas.product import ProductCreate, ProductRead, ProductUpdate
 from app.dependencies.auth import require_role
+from sqlalchemy.exc import IntegrityError
 
 router = APIRouter(prefix="/products", tags=["products"])
 
@@ -57,6 +58,7 @@ def create_product(
     product = Product(
         name=data.name,
         description=data.description,
+        composition=data.composition,
         price=data.price,
         weight=data.weight,
         image=data.image,
@@ -65,8 +67,15 @@ def create_product(
     )
 
     db.add(product)
-    db.commit()
-    db.refresh(product)
+    try:
+        db.commit()
+        db.refresh(product)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Product with this name already exist",
+        )
     return product
 
 @router.patch("/{product_id}", response_model=ProductRead)
@@ -90,7 +99,7 @@ def update_product(
     db.refresh(product)
     return product
 
-@router.delete("/{product_id}", status_code=204)
+@router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_product(
     product_id: int,
     admin: User = Depends(require_role("admin")),
@@ -102,5 +111,7 @@ def delete_product(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Product not found",
         )
-    db.delete(product)
+
+    product.is_available = False
     db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -5,6 +5,7 @@ class ProductBase(BaseModel):
     """Общие поля для схем Product."""
     name: str = Field(min_length=1, max_length=100)
     description: str | None = None
+    composition: str | None = None
     price: Decimal = Field(gt=0, decimal_places=2)
     weight: Decimal = Field(gt=0, decimal_places=2)
     image: str | None = Field(default=None, max_length=255)
@@ -23,8 +24,9 @@ class ProductRead(ProductBase):
 
 class ProductUpdate(BaseModel):
     """Что приходит при обновлении."""
-    name: str = Field(default=None, min_length=1, max_length=100)
+    name: str | None = Field(default=None, min_length=1, max_length=100)
     description: str | None = None
+    composition: str | None = None
     price: Decimal | None = Field(default=None, gt=0, decimal_places=2)
     weight: Decimal | None = Field(default=None, gt=0, decimal_places=2)
     image: str | None = Field(default=None, max_length=255)

@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Response
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.category import Category
 from app.models.user import User
+from app.models.product import Product
 from app.schemas.category import CategoryCreate, CategoryRead, CategoryUpdate
 from app.dependencies.auth import require_role
 
@@ -68,9 +69,11 @@ def update_category(category_id: int, data: CategoryUpdate,
     db.refresh(category)
     return category
 
-@router.delete("/{category_id}", status_code=204)
-def delete_category(category_id: int, admin: User = Depends(require_role("admin")),
-                    db: Session = Depends(get_db)):
+@router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_category(
+    category_id: int,
+    admin: User = Depends(require_role("admin")),
+    db: Session = Depends(get_db)):
     """Удалить категорию."""
     category = db.query(Category).filter(Category.id == category_id).first()
     if not category:
@@ -78,6 +81,13 @@ def delete_category(category_id: int, admin: User = Depends(require_role("admin"
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Category not found",
         )
-
+    product = db.query(Product).filter(Product.category_id == category_id).first()
+    if product:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete category with products",
+        )
+    
     db.delete(category)
     db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
