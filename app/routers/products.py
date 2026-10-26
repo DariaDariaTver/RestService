@@ -1,12 +1,9 @@
-from fastapi import APIRouter, HTTPException, Depends, status, Response
+from fastapi import APIRouter, HTTPException, Depends, status
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models.user import User
 from app.models.category import Category
 from app.models.product import Product
-from app.schemas.product import ProductCreate, ProductRead, ProductUpdate
-from app.dependencies.auth import require_role
-from sqlalchemy.exc import IntegrityError
+from app.schemas.product import ProductRead
 
 router = APIRouter(prefix="/products", tags=["products"])
 
@@ -41,77 +38,3 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
             detail="Product not found",
         )
     return product
-
-@router.post("/", response_model=ProductRead, status_code=201)
-def create_product(
-    data: ProductCreate,
-    admin: User = Depends(require_role("admin")),
-    db: Session = Depends(get_db),
-):
-    category = db.query(Category).filter(Category.id == data.category_id).first()
-    if not category:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Category not found",
-        )
-
-    product = Product(
-        name=data.name,
-        description=data.description,
-        composition=data.composition,
-        price=data.price,
-        weight=data.weight,
-        image=data.image,
-        is_available=data.is_available,
-        category_id=data.category_id,
-    )
-
-    db.add(product)
-    try:
-        db.commit()
-        db.refresh(product)
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Product with this name already exist",
-        )
-    return product
-
-@router.patch("/{product_id}", response_model=ProductRead)
-def update_product(
-    product_id: int,
-    data: ProductUpdate,
-    admin: User = Depends(require_role("admin")),
-    db: Session = Depends(get_db)
-    ):
-    product = db.query(Product).filter(Product.id == product_id).first()
-    if not product:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Product not found",
-        )
-    update_data = data.model_dump(exclude_unset=True, exclude_none=True)
-    for key, value in update_data.items():
-        setattr(product, key, value)
-
-    db.commit()
-    db.refresh(product)
-    return product
-
-@router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_product(
-    product_id: int,
-    admin: User = Depends(require_role("admin")),
-    db: Session = Depends(get_db),
-    ):
-    product = db.query(Product).filter(Product.id == product_id).first()
-    if not product:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Product not found",
-        )
-
-    product.is_available = False
-    db.commit()
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
