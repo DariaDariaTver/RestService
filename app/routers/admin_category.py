@@ -6,22 +6,20 @@ from app.models.user import User
 from app.models.product import Product
 from app.schemas.category import CategoryCreate, CategoryRead, CategoryUpdate
 from app.dependencies.auth import require_role
+from sqlalchemy import select
 
 router = APIRouter(prefix="/admin/categories", tags=["admin_categories"])
 
 @router.get("/", response_model=list[CategoryRead])
 def list_categories(db: Session = Depends(get_db)):
     """Получить список категорий."""
-    return(
-    db.query(Category)
-    .order_by(Category.sort, Category.id)
-    .all()
-    )
+    stmt = select(Category).order_by(Category.sort, Category.id)
+    return db.scalars(stmt).all()
 
 @router.get("/{category_id}", response_model=CategoryRead)
 def get_category(category_id: int, db: Session = Depends(get_db)):
     """Получить категорию."""
-    category = db.query(Category).filter(Category.id == category_id).first()
+    category = db.get(Category, category_id)
     if not category:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -33,7 +31,8 @@ def get_category(category_id: int, db: Session = Depends(get_db)):
 def create_category(data: CategoryCreate, admin: User = Depends(require_role("admin")),
                     db: Session = Depends(get_db)):
     """Создать категорию."""
-    existing = db.query(Category).filter(Category.name == data.name).first()
+    stmt = select(Category).where(Category.name == data.name)
+    existing = db.scalars(stmt).first()
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -55,7 +54,7 @@ def update_category(category_id: int, data: CategoryUpdate,
                     admin: User = Depends(require_role("admin")),
                     db: Session = Depends(get_db)):
     """Обновить категорию."""
-    category = db.query(Category).filter(Category.id == category_id).first()
+    category = db.get(Category, category_id)
     if not category:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -75,13 +74,14 @@ def delete_category(
     admin: User = Depends(require_role("admin")),
     db: Session = Depends(get_db)):
     """Удалить категорию."""
-    category = db.query(Category).filter(Category.id == category_id).first()
+    category = db.get(Category, category_id)
     if not category:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Category not found",
         )
-    product = db.query(Product).filter(Product.category_id == category_id).first()
+    stmt = select(Product).where(Product.category_id == category_id)
+    product = db.scalars(stmt).first()
     if product:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

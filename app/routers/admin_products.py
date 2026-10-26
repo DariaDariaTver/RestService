@@ -7,6 +7,7 @@ from app.models.product import Product
 from app.schemas.product import ProductCreate, ProductRead, ProductUpdate
 from app.dependencies.auth import require_role
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import select
 
 router = APIRouter(prefix="/admin/products", tags=["admin_products"])
 
@@ -20,21 +21,22 @@ def list_products(
     db: Session = Depends(get_db),
     ):
     if category_id is None:
-        first_category = db.query(Category).order_by(Category.sort).first()
+        stmt = select(Category).order_by(Category.sort).limit(1)
+        first_category = db.scalars(stmt).first()
         if first_category:
             category_id = first_category.id
     if not category_id:
         return []
-    query = db.query(Product).filter(Product.category_id == category_id)
+    stmt = select(Product).where(Product.category_id == category_id)
     if search:
-        query = query.filter(Product.name.ilike(f"%{search}%"))
+        stmt = stmt.where(Product.name.ilike(f"%{search}%"))
     if only_available:
-        query = query.filter(Product.is_available == True)
-    return query.offset(skip).limit(limit).all()
+       stmt = stmt.where(Product.is_available == True)
+    return db.scalars(stmt.offset(skip).limit(limit)).all()
             
 @router.get("/{product_id}", response_model=ProductRead)
 def get_product(product_id: int, db: Session = Depends(get_db)):
-    product = db.query(Product).filter(Product.id == product_id).first()
+    product = db.get(Product, product_id)
     if not product:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -48,7 +50,7 @@ def create_product(
     admin: User = Depends(require_role("admin")),
     db: Session = Depends(get_db),
 ):
-    category = db.query(Category).filter(Category.id == data.category_id).first()
+    category = db.get(Category, data.category_id)
     if not category:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -85,13 +87,13 @@ def update_product(
     admin: User = Depends(require_role("admin")),
     db: Session = Depends(get_db)
     ):
-    product = db.query(Product).filter(Product.id == product_id).first()
+    product = db.get(Product, product_id)
     if not product:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Product not found",
         )
-    update_data = data.model_dump(exclude_unset=True, exclude_none=True)
+    update_data = data.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(product, key, value)
 
@@ -105,7 +107,7 @@ def delete_product(
     admin: User = Depends(require_role("admin")),
     db: Session = Depends(get_db),
     ):
-    product = db.query(Product).filter(Product.id == product_id).first()
+    product = db.get(Product, product_id)
     if not product:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
