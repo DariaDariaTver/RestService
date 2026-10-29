@@ -22,10 +22,9 @@ def list_products(
     page: int = Query(1, ge=1),
     only_available: bool = True,
     limit: int = Query(20, ge=1, le=100),
-    db: Session = Depends(get_db),
-    ):
+    db: Session = Depends(get_db)):
     if category_id is None:
-        stmt = select(Category).order_by(Category.sort).limit(1)
+        stmt = select(Category).where(Category.is_visible == True).order_by(Category.sort).limit(1)
         first_category = db.scalars(stmt).first()
         if first_category:
             category_id = first_category.id
@@ -37,38 +36,37 @@ def list_products(
             "pages": 0
         }
     
-    stmt = select(Product).where(Product.category_id == category_id)
+    stmt = select(Product).join(Category).where(Product.category_id == category_id,
+            Category.is_visible == True)
 
-    if (
-        min_price is not None
-        and max_price is not None
-        and min_price > max_price
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail="min_price cannot be greated max_price"
-        )
-    if min_price is not None:
-        stmt = stmt.where(Product.price >= min_price)
-    if max_price is not None:
-        stmt = stmt.where(Product.price <= max_price)
     if search:
         stmt = stmt.where(Product.name.ilike(f"%{search}%"))
     if only_available:
         stmt = stmt.where(Product.is_available.is_(True))
-
-    total = db.scalar(select(func.count()).select_from(stmt.subquery()))
+    if (
+        min_price is not None
+        and max_price is not None
+        and min_price > max_price
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="min_price cannot be greater than max_price"
+                )
+    if min_price is not None:
+        stmt = stmt.where(Product.price >= min_price)
+    if max_price is not None:
+        stmt = stmt.where(Product.price <= max_price)
     sort_map = {
-        "id": Product.id,
-        "name": Product.name,
-        "price": Product.price
-    }
+            "id": Product.id,
+            "name": Product.name,
+            "price": Product.price
+        }
     sort_column = sort_map.get(sort_by, Product.id)
     if order == "desc":
         stmt = stmt.order_by(sort_column.desc(), Product.id.desc())
     else:
         stmt = stmt.order_by(sort_column.asc(), Product.id.asc())
-
+    total = db.scalar(select(func.count()).select_from(stmt.subquery()))
     offset = (page - 1) * limit
     stmt = stmt.offset(offset).limit(limit)
     products = db.scalars(stmt).all()
@@ -88,4 +86,11 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Product not found",
         )
+    category = db.get(Category, product.category_id)
+    if not category or not category.is_visible:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Product not found"
+        )
+    
     return product

@@ -5,6 +5,7 @@ class CategoryBase(BaseModel):
     name: str = Field(min_length=1, max_length=100)
     description: str | None = None
     sort: int = 0
+    is_visible: bool = True
 
 class CategoryCreate(CategoryBase):
     """Что приходит при создании категории."""
@@ -21,3 +22,4 @@ class CategoryUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=100)
     description: str | None = None
     sort: int | None = None
+    is_visible: bool | None = None

@@ -16,13 +16,12 @@ def list_categories(
     limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db)):
     """Получить список категорий."""
-    stmt = select(Category)
+    stmt = select(Category).where(Category.is_visible == True)
     if search:
         stmt = stmt.where(Category.name.ilike(f"%{search}%"))
     total = db.scalar(select(func.count()).select_from(stmt.subquery()))
 
     stmt = stmt.order_by(Category.sort, Category.id)
-
     offset = (page - 1) * limit
     stmt = stmt.offset(offset).limit(limit)
     categories = db.scalars(stmt).all()
@@ -38,7 +37,7 @@ def list_categories(
 def get_category(category_id: int, db: Session = Depends(get_db)):
     """Получить категорию."""
     category = db.get(Category, category_id)
-    if not category:
+    if not category or not category.is_visible:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Category not found",

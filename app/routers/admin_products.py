@@ -10,6 +10,7 @@ from app.dependencies.auth import require_role
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import select, func
 import math
+from decimal import Decimal
 
 router = APIRouter(prefix="/admin/products", tags=["admin_products"])
 
@@ -17,21 +18,47 @@ router = APIRouter(prefix="/admin/products", tags=["admin_products"])
 def list_products(
     category_id: int | None = None,
     search: str | None = None,
-    only_available: bool = True,
+    only_available: bool = False,
+    min_price: Decimal | None = None,
+    max_price: Decimal | None = None,
+    sort_by: str = "id",
+    order: str = "asc",
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
-    db: Session = Depends(get_db),
-    ):
+    admin: User = Depends(require_role("admin")),
+    db: Session = Depends(get_db)):
     stmt = select(Product)
+    if (
+            min_price is not None
+            and max_price is not None
+            and min_price > max_price
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="min_price cannot be greater than max_price"
+            )
+    if min_price is not None:
+        stmt = stmt.where(Product.price >= min_price)
+    if max_price is not None:
+        stmt = stmt.where(Product.price <= max_price)
     if category_id is not None:
         stmt = stmt.where(Product.category_id == category_id)
     if search:
         stmt = stmt.where(Product.name.ilike(f"%{search}%"))
     if only_available:
         stmt = stmt.where(Product.is_available.is_(True))
-
-    stmt = stmt.order_by(Product.id)
     total = db.scalar(select(func.count()).select_from(stmt.subquery()))
+    sort_map = {
+        "id": Product.id,
+        "name": Product.name,
+        "price": Product.price
+    }
+    sort_column = sort_map.get(sort_by, Product.id)
+    if order == "desc":
+        stmt = stmt.order_by(sort_column.desc(), Product.id.desc())
+    else:
+        stmt = stmt.order_by(sort_column.asc(), Product.id.asc())
+    
     offset = (page - 1) * limit
     stmt = stmt.offset(offset).limit(limit)
     products = db.scalars(stmt).all()
@@ -44,7 +71,9 @@ def list_products(
             }
             
 @router.get("/{product_id}", response_model=ProductRead)
-def get_product(product_id: int, db: Session = Depends(get_db)):
+def get_product(product_id: int,
+                db: Session = Depends(get_db),
+                admin: User = Depends(require_role("admin"))):
     product = db.get(Product, product_id)
     if not product:
         raise HTTPException(
@@ -57,8 +86,7 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
 def create_product(
     data: ProductCreate,
     admin: User = Depends(require_role("admin")),
-    db: Session = Depends(get_db),
-):
+    db: Session = Depends(get_db)):
     category = db.get(Category, data.category_id)
     if not category:
         raise HTTPException(

@@ -17,6 +17,7 @@ def list_categories(
     search: str | None = None,
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
+    admin: User = Depends(require_role("admin")),
     db: Session = Depends(get_db)):
     """Получить список категорий."""
     stmt = select(Category)
@@ -36,7 +37,9 @@ def list_categories(
     }
 
 @router.get("/{category_id}", response_model=CategoryRead)
-def get_category(category_id: int, db: Session = Depends(get_db)):
+def get_category(category_id: int,
+                admin: User = Depends(require_role("admin")),
+                db: Session = Depends(get_db)):
     """Получить категорию."""
     category = db.get(Category, category_id)
     if not category:
@@ -47,7 +50,8 @@ def get_category(category_id: int, db: Session = Depends(get_db)):
     return category
 
 @router.post("/", response_model=CategoryRead, status_code=201)
-def create_category(data: CategoryCreate, admin: User = Depends(require_role("admin")),
+def create_category(data: CategoryCreate,
+                    admin: User = Depends(require_role("admin")),
                     db: Session = Depends(get_db)):
     """Создать категорию."""
     stmt = select(Category).where(Category.name == data.name)
@@ -99,14 +103,7 @@ def delete_category(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Category not found",
         )
-    stmt = select(Product).where(Product.category_id == category_id)
-    product = db.scalars(stmt).first()
-    if product:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete category with products",
-        )
-    
-    db.delete(category)
+
+    category.is_visible = False
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
