@@ -42,6 +42,8 @@
 | id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор категории |
 | name | VARCHAR(100) | UNIQUE, NOT NULL | Название категории |
 | description | TEXT | | Описание категории |
+| sort | INTEGER | DEFAULT 0 | Порядок отображения категории |
+| is_visible | BOOLEAN | DEFAULT TRUE | Флаг видимости категории |
 | created_at | TIMESTAMP | DEFAULT NOW() | Дата создания записи |
 | updated_at | TIMESTAMP | DEFAULT NOW() | Дата последнего обновления записи |
 
