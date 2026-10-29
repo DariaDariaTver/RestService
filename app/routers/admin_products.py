@@ -28,18 +28,19 @@ def list_products(
     if search:
         stmt = stmt.where(Product.name.ilike(f"%{search}%"))
     if only_available:
-        stmt = stmt.where(Product.is_available == True)
+        stmt = stmt.where(Product.is_available.is_(True))
 
+    stmt = stmt.order_by(Product.id)
     total = db.scalar(select(func.count()).select_from(stmt.subquery()))
     offset = (page - 1) * limit
     stmt = stmt.offset(offset).limit(limit)
-    product = db.scalars(stmt).all()
+    products = db.scalars(stmt).all()
     pages = math.ceil(total / limit) if total > 0 else 0
     return {
-            "items": product,
-            "total": 0,
+            "items": products,
+            "total": total,
             "page": page,
-            "pages": 0
+            "pages": pages
             }
             
 @router.get("/{product_id}", response_model=ProductRead)

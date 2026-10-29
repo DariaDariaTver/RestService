@@ -18,7 +18,7 @@ def list_categories(
     """Получить список категорий."""
     stmt = select(Category)
     if search:
-        stmt = stmt.where(Category.name.ilike(F"%{search}%"))
+        stmt = stmt.where(Category.name.ilike(f"%{search}%"))
     total = db.scalar(select(func.count()).select_from(stmt.subquery()))
 
     stmt = stmt.order_by(Category.sort, Category.id)

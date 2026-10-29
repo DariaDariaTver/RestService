@@ -29,7 +29,7 @@ def list_products(
         first_category = db.scalars(stmt).first()
         if first_category:
             category_id = first_category.id
-    if not category_id:
+    if category_id is None:
         return {
             "items": [],
             "total": 0,
@@ -39,14 +39,23 @@ def list_products(
     
     stmt = select(Product).where(Product.category_id == category_id)
 
+    if (
+        min_price is not None
+        and max_price is not None
+        and min_price > max_price
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="min_price cannot be greated max_price"
+        )
     if min_price is not None:
-        stmt = stmt.where(Product.price >= min.price)
+        stmt = stmt.where(Product.price >= min_price)
     if max_price is not None:
-        stmt = stmt.where(Product.price <= max.price)
+        stmt = stmt.where(Product.price <= max_price)
     if search:
         stmt = stmt.where(Product.name.ilike(f"%{search}%"))
     if only_available:
-        stmt = stmt.where(Product.is_available == True)
+        stmt = stmt.where(Product.is_available.is_(True))
 
     total = db.scalar(select(func.count()).select_from(stmt.subquery()))
     sort_map = {
@@ -56,9 +65,9 @@ def list_products(
     }
     sort_column = sort_map.get(sort_by, Product.id)
     if order == "desc":
-        stmt = stmt.order_by(sort_column.desc())
+        stmt = stmt.order_by(sort_column.desc(), Product.id.desc())
     else:
-        stmt = stmt.order_by(sort_column.asc())
+        stmt = stmt.order_by(sort_column.asc(), Product.id.asc())
 
     offset = (page - 1) * limit
     stmt = stmt.offset(offset).limit(limit)

@@ -22,7 +22,7 @@ def list_categories(
     stmt = select(Category)
     if search:
         stmt = stmt.where(Category.name.ilike(f"%{search}%"))
-    total = db.scalars(select(func.count()).select_from(stmt.subquery))
+    total = db.scalar(select(func.count()).select_from(stmt.subquery()))
     stmt = stmt.order_by(Category.sort, Category.id)
     offset = (page - 1) * limit
     stmt = stmt.offset(offset).limit(limit)
