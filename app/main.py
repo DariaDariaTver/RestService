@@ -4,6 +4,7 @@ from app.routers import category
 from app.routers import products
 from app.routers import admin_products
 from app.routers import admin_category
+from app.routers import cart
 from app.database import engine, Base
 from app.config import settings
 from fastapi import FastAPI
@@ -31,6 +32,7 @@ app.include_router(category.router)
 app.include_router(products.router)
 app.include_router(admin_products.router)
 app.include_router(admin_category.router)
+app.include_router(cart.router)
 
 @app.get("/")
 def root():
