@@ -9,6 +9,7 @@ from app.models.cart import Cart
 from app.models.cart_item import CartItem
 from app.schemas.cart import CartItemRead, CartRead, CartItemCreate, CartItemUpdate
 from app.dependencies.auth import get_current_user
+from sqlalchemy.exc import IntegrityError
 
 router = APIRouter(prefix="/cart", tags=["cart"])
 
@@ -16,10 +17,9 @@ router = APIRouter(prefix="/cart", tags=["cart"])
 def get_cart(current_user: User = Depends(get_current_user),
             db: Session = Depends(get_db)):
     stmt = select(Cart)
-    stmt = stmt.options(
-        joinedload(Cart.items).joineload(CartItem.product))
-    stmt = stmt.where(Cart.user.id == current_user.id)
-    cart = db.scalars(stmt).first()
+    stmt = stmt.options(joinedload(Cart.items).joinedload(CartItem.product))
+    stmt = stmt.where(Cart.user_id == current_user.id)
+    cart = db.scalars(stmt).unique().first()
     if cart is None:
         return {
             "items": [],
@@ -49,33 +49,40 @@ def create_cart(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Product is not available"
         )
-    stmt = select(Cart).where(Cart.user_id == current_user.id)
-    cart = db.scalars(stmt).first()
-    if not cart:
-        cart = Cart(user_id = current_user.id)
-        db.add(cart)
-        db.commit()
-        db.refresh(cart)
+    try:
+        cart = db.scalars(
+        select(Cart).where(Cart.user_id == current_user.id)).first()
+        if cart is None:
+            cart = Cart(user_id = current_user.id)
+            db.add(cart)
+            db.flush()
 
-        stmt = select(CartItem)
-        stmt = stmt.where(CartItem.cart_id == cart.id)
-        stmt = stmt.where(CartItem.product_id == product.id)
-        existing_item = db.scalars(stmt).first()
+        existing_item = db.scalars(
+        select(CartItem).where(
+        CartItem.cart_id == cart.id,
+        CartItem.product_id == product.id)).first()
         if existing_item:
-                existing_item.quantity = existing_item.quantity + data.quantity
-                db.commit()
-                db.refresh(existing_item)
-                return existing_item
-        new_item = CartItem(
-        cart_id=cart.id,
-        product_id=product.id,
-        quantity=data.quantity
-        )
-        db.add(new_item)
+            existing_item.quantity += data.quantity
+            item = existing_item
+        else:
+            item = CartItem(
+                cart_id=cart.id,
+                product_id=product.id,
+                quantity=data.quantity,
+            )
+            db.add(item)
         db.commit()
-        db.refresh(new_item)
-        return new_item
+        db.refresh(item)
 
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(
+
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Operation conflicts"
+        )
+    return item
+    
 @router.patch("/items/{item_id}", response_model=CartItemRead)
 def update_cart(
     item_id: int,
@@ -93,12 +100,28 @@ def update_cart(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied"
         )
-    if data.quantity == 0:
-        db.delete(item)
-        db.commit()
-        return Response(status_code=status.HTTP_204_NO_CONTENT)
     
     item.quantity = data.quantity
     db.commit()
     db.refresh(item)
     return item
+
+@router.delete("/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_cart(
+    item_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)):
+    item = db.get(CartItem, item_id)
+    if not item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Cart item not found"
+        )
+    if item.cart.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied"
+        )
+    db.delete(item)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

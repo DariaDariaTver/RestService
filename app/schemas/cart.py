@@ -4,10 +4,10 @@ from decimal import Decimal
 
 class CartItemCreate(BaseModel):
     product_id: int 
-    quantity: int = Field(ge=1)
+    quantity: int = Field(gt=0)
 
 class CartItemUpdate(BaseModel):
-    quantity: int = Field(ge=0)
+    quantity: int = Field(gt=0)
 
 class CartItemRead(BaseModel):
     id: int
