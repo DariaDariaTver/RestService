@@ -125,3 +125,16 @@ def delete_cart(
     db.delete(item)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@router.delete("/clear", status_code=status.HTTP_204_NO_CONTENT)
+def clear_cart(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)):
+    stmt = select(Cart).where(Cart.user_id == current_user.id)
+    cart = db.scalars(stmt).first()
+    if not cart:
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+    for item in cart.items:
+        db.delete(item)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
