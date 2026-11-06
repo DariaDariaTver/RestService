@@ -34,7 +34,7 @@ def get_cart(current_user: User = Depends(get_current_user),
         }
 
 @router.post("/items", response_model=CartItemRead, status_code=201)
-def create_cart(
+def add_cart_item(
     data: CartItemCreate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)):
@@ -84,7 +84,7 @@ def create_cart(
     return item
     
 @router.patch("/items/{item_id}", response_model=CartItemRead)
-def update_cart(
+def update_cart_item(
     item_id: int,
     data: CartItemUpdate,
     current_user: User = Depends(get_current_user),
@@ -107,7 +107,7 @@ def update_cart(
     return item
 
 @router.delete("/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_cart(
+def delete_cart_item(
     item_id: int,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)):

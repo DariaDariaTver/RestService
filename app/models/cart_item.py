@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Identity, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, Identity, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
@@ -12,6 +12,8 @@ class CartItem(Base):
     quantity = Column(Integer, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    __table_args__ = (UniqueConstraint("cart.id", "product_id", name="unique_cart_product"),)
 
     cart = relationship("Cart", back_populates="items")
     product = relationship("Product")

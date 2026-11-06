@@ -263,7 +263,7 @@ CREATE INDEX idx_orders_courier_id ON orders(courier_id)
 }
 ```
 
-#### PUT /users/me - Обновить свой профиль
+#### PATCH /users/me - Обновить свой профиль
 
 **Запрос:**
 ```json
@@ -331,7 +331,7 @@ CREATE INDEX idx_orders_courier_id ON orders(courier_id)
 }
 ```
 
-#### PUT /users/me/addresses/{id} - Обновить текущий адрес 
+#### PATCH /users/me/addresses/{id} - Обновить текущий адрес 
 
 **Запрос:**
 ```json
@@ -457,23 +457,23 @@ GET /products?category_id=3&limit=20&offset=0
 **Ответ(200):**
 ```json
 {
-  "id": 1,
   "items": [
     {
-      "product_id": 11,
-      "name": "Борщ",
+      "id": 1,
       "quantity": 2,
-      "price": 350.00
-    },
-    {
-      "product_id": 27,
-      "name": "Пельмени домашние",
-      "quantity": 1,
-      "price": 300.00
+      "product": {
+        "id": 12,
+        "name": "Борщ",
+        "description": "Борщ со сметаной",
+        "price": 350.00,
+        "is_available": true
+      },
+      "total_price": "700.00"
     }
   ],
-  "total": 1000.00
-}
+  "total_price": "700.00",
+  "items_count": 2
+  }
 ```
 
 #### POST /cart/items - Добавить товар в корзину
@@ -490,22 +490,22 @@ GET /products?category_id=3&limit=20&offset=0
 ```json
 {
   "id": 1,
-  "items": [
-    {
-      "product_id": 11,
-      "name": "Борщ",
-      "quantity": 2,
-      "price": 350.00
-    }
-  ],
-  "total": 700.00
+  "quantity": 2,
+  "product": {
+    "id": 12,
+    "name": "Борщ",
+    "description": "Борщ со сметаной",
+    "price": 350.00,
+    "is_available": true
+  },
+  "total_price": "700.00"
 }
 ```
 
-#### PUT /cart/items/{id} - Обновить количества товаров
+#### PATCH /cart/items/{id} - Обновить количество товара
 
 **Параметр пути:**
-- id(int) - id товара в корзине
+- id(int) - id товара в корзине (CartItem ID)
 
 **Запрос:**
 ```json
@@ -518,15 +518,15 @@ GET /products?category_id=3&limit=20&offset=0
 ```json
 {
   "id": 1,
-  "items": [
-    {
-      "product_id": 11,
-      "name": "Борщ",
-      "quantity": 3,
-      "price": 350.00
-    }
-  ],
-  "total": 1050.00
+  "quantity": 3,
+  "product": {
+    "id": 12,
+    "name": "Борщ",
+    "description": "Борщ со сметаной",
+    "price": 350.00,
+    "is_available": true
+  },
+  "total_price": "1050.00"
 }
 ```
 
@@ -536,6 +536,10 @@ GET /products?category_id=3&limit=20&offset=0
 - id(int) - id товара в корзине
 
 **Ответ(204)**
+
+#### DELETE /cart/clear - Очистить корзину
+
+**Ответ(204):** No Content
 
 ### Заказы
 
@@ -678,7 +682,7 @@ GET /orders?status=delivering&limit=20&offset=0
 }
 ```
 
-#### PUT /admin/categories/{id} - Обновить категорию
+#### PATCH /admin/categories/{id} - Обновить категорию
 
 **Параметр пути:**
 - id(int) - id категории
@@ -739,7 +743,7 @@ GET /orders?status=delivering&limit=20&offset=0
 }
 ```
 
-#### PUT /admin/products/{id} - Обновить товар
+#### PATCH /admin/products/{id} - Обновить товар
 
 **Параметр пути:**
 - id(int) - id товара
@@ -861,7 +865,7 @@ GET /admin/orders?status=new&limit=20&offset=0
 }
 ```
 
-#### PUT /admin/orders/{id}/status - Изменить статус данного заказа
+#### PATCH /admin/orders/{id}/status - Изменить статус данного заказа
 
 **Параметр пути:**
 - id(int) - id заказа
@@ -882,7 +886,7 @@ GET /admin/orders?status=new&limit=20&offset=0
 }
 ```
 
-#### PUT /admin/orders/{id}/courier - Назначить курьера
+#### PATCH /admin/orders/{id}/courier - Назначить курьера
 
 **Параметр пути:**
 - id(int) - id заказа
@@ -927,7 +931,7 @@ GET /admin/orders?status=new&limit=20&offset=0
   ]
 }
 ```
-#### PUT /courier/orders/{id}/status - Отметить заказ доставленным
+#### PATCH /courier/orders/{id}/status - Отметить заказ доставленным
 
 **Параметр пути:**
 - id(int) - id заказа
