@@ -13,7 +13,7 @@ class CartItem(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-    __table_args__ = (UniqueConstraint("cart.id", "product_id", name="unique_cart_product"),)
+    __table_args__ = (UniqueConstraint("cart_id", "product_id", name="unique_cart_product"),)
 
     cart = relationship("Cart", back_populates="items")
     product = relationship("Product")
