@@ -10,7 +10,7 @@ from app.models.order import Order
 from app.models.order_item import OrderItem
 from app.models.user import User
 from app.models.order_status import OrderStatus
-from app.schemas.order import OrderCreate, OrderRead
+from app.schemas.order import OrderCreate, OrderRead, OrderStatusUpdate
 from sqlalchemy.orm import Session, joinedload
 from app.dependencies.auth import get_current_user, require_role
 from app.database import get_db
@@ -48,4 +48,26 @@ def get_orders(
         "pages": pages
     }
 
+@router.patch("/{order_id}/status", response_model=OrderRead)
+def update_status_order(
+    order_id: int,
+    data:  OrderStatusUpdate,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_role("admin"))):
+    order = db.get(Order, order_id)
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Order not found"
+        )
+    new_status = db.get(OrderStatus, data.status_id)
+    if not new_status:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New status not found"
+        )
+    order.status_id == data.status_id
+    db.commit()
+    db.refresh(order)
     
+    return order
