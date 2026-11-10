@@ -8,17 +8,18 @@ from app.schemas.category import CategoryCreate, CategoryRead, CategoryUpdate
 from app.schemas.pagination import PaginationResponse
 from app.dependencies.auth import require_role
 from sqlalchemy import select, func
-import math 
+import math
+from typing import Annotated
 
 router = APIRouter(prefix="/admin/categories", tags=["admin_categories"])
 
 @router.get("/", response_model=PaginationResponse[CategoryRead])
 def list_categories(
+    db: Annotated[Session, Depends(get_db)],
+    admin: Annotated[User, Depends(require_role("admin"))],
     search: str | None = None,
-    page: int = Query(1, ge=1),
-    limit: int = Query(20, ge=1, le=100),
-    admin: User = Depends(require_role("admin")),
-    db: Session = Depends(get_db)):
+    page: Annotated[int, Query(ge=1)] = 1,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20):
     """Получить список категорий."""
     stmt = select(Category)
     if search:
@@ -38,8 +39,8 @@ def list_categories(
 
 @router.get("/{category_id}", response_model=CategoryRead)
 def get_category(category_id: int,
-                admin: User = Depends(require_role("admin")),
-                db: Session = Depends(get_db)):
+                admin: Annotated[User, Depends(require_role("admin"))],
+                db: Annotated[Session, Depends(get_db)]):
     """Получить категорию."""
     category = db.get(Category, category_id)
     if not category:
@@ -51,8 +52,8 @@ def get_category(category_id: int,
 
 @router.post("/", response_model=CategoryRead, status_code=201)
 def create_category(data: CategoryCreate,
-                    admin: User = Depends(require_role("admin")),
-                    db: Session = Depends(get_db)):
+                    admin: Annotated[User, Depends(require_role("admin"))],
+                    db: Annotated[Session, Depends(get_db)]):
     """Создать категорию."""
     stmt = select(Category).where(Category.name == data.name)
     existing = db.scalars(stmt).first()
@@ -73,9 +74,10 @@ def create_category(data: CategoryCreate,
     return category
 
 @router.patch("/{category_id}", response_model=CategoryRead)
-def update_category(category_id: int, data: CategoryUpdate,
-                    admin: User = Depends(require_role("admin")),
-                    db: Session = Depends(get_db)):
+def update_category(category_id: int,
+                    data: CategoryUpdate,
+                    admin: Annotated[User, Depends(require_role("admin"))],
+                    db: Annotated[Session, Depends(get_db)]):
     """Обновить категорию."""
     category = db.get(Category, category_id)
     if not category:
@@ -94,8 +96,8 @@ def update_category(category_id: int, data: CategoryUpdate,
 @router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_category(
     category_id: int,
-    admin: User = Depends(require_role("admin")),
-    db: Session = Depends(get_db)):
+    admin: Annotated[User, Depends(require_role("admin"))],
+    db: Annotated[Session, Depends(get_db)]):
     """Удалить категорию."""
     category = db.get(Category, category_id)
     if not category:

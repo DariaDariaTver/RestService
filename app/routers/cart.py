@@ -10,12 +10,13 @@ from app.models.cart_item import CartItem
 from app.schemas.cart import CartItemRead, CartRead, CartItemCreate, CartItemUpdate
 from app.dependencies.auth import get_current_user
 from sqlalchemy.exc import IntegrityError
+from typing import Annotated
 
 router = APIRouter(prefix="/cart", tags=["cart"])
 
 @router.get("/", response_model=CartRead)
-def get_cart(current_user: User = Depends(get_current_user),
-            db: Session = Depends(get_db)):
+def get_cart(current_user: Annotated[User, Depends(get_current_user)],
+            db: Annotated[Session, Depends(get_db)]):
     stmt = select(Cart)
     stmt = stmt.options(joinedload(Cart.items).joinedload(CartItem.product))
     stmt = stmt.where(Cart.user_id == current_user.id)
@@ -36,8 +37,8 @@ def get_cart(current_user: User = Depends(get_current_user),
 @router.post("/items", response_model=CartItemRead, status_code=201)
 def add_cart_item(
     data: CartItemCreate,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)):
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)]):
     product = db.get(Product, data.product_id)
     if not product:
         raise HTTPException(
@@ -87,8 +88,8 @@ def add_cart_item(
 def update_cart_item(
     item_id: int,
     data: CartItemUpdate,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)):
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)]):
     item = db.get(CartItem, item_id)
     if not item:
         raise HTTPException(
@@ -109,8 +110,8 @@ def update_cart_item(
 @router.delete("/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_cart_item(
     item_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)):
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)]):
     item = db.get(CartItem, item_id)
     if not item:
         raise HTTPException(
@@ -128,8 +129,8 @@ def delete_cart_item(
 
 @router.delete("/clear", status_code=status.HTTP_204_NO_CONTENT)
 def clear_cart(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)):
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)]):
     stmt = select(Cart).where(Cart.user_id == current_user.id)
     cart = db.scalars(stmt).first()
     if not cart:

@@ -11,11 +11,14 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy import select, func
 import math
 from decimal import Decimal
+from typing import Annotated
 
 router = APIRouter(prefix="/admin/products", tags=["admin_products"])
 
 @router.get("/", response_model=PaginationResponse[ProductRead])
 def list_products(
+    db: Annotated[Session, Depends(get_db)],
+    admin: Annotated[User, Depends(require_role("admin"))],
     category_id: int | None = None,
     search: str | None = None,
     only_available: bool = False,
@@ -23,10 +26,8 @@ def list_products(
     max_price: Decimal | None = None,
     sort_by: str = "id",
     order: str = "asc",
-    page: int = Query(1, ge=1),
-    limit: int = Query(20, ge=1, le=100),
-    admin: User = Depends(require_role("admin")),
-    db: Session = Depends(get_db)):
+    page: Annotated[int, Query(ge=1)] = 1,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20):
     stmt = select(Product)
     if (
             min_price is not None
@@ -72,8 +73,8 @@ def list_products(
             
 @router.get("/{product_id}", response_model=ProductRead)
 def get_product(product_id: int,
-                db: Session = Depends(get_db),
-                admin: User = Depends(require_role("admin"))):
+                db: Annotated[Session, Depends(get_db)],
+                admin: Annotated[User, Depends(require_role("admin"))]):
     product = db.get(Product, product_id)
     if not product:
         raise HTTPException(
@@ -85,8 +86,8 @@ def get_product(product_id: int,
 @router.post("/", response_model=ProductRead, status_code=201)
 def create_product(
     data: ProductCreate,
-    admin: User = Depends(require_role("admin")),
-    db: Session = Depends(get_db)):
+    admin: Annotated[User, Depends(require_role("admin"))],
+    db: Annotated[Session, Depends(get_db)]):
     category = db.get(Category, data.category_id)
     if not category:
         raise HTTPException(
@@ -121,9 +122,8 @@ def create_product(
 def update_product(
     product_id: int,
     data: ProductUpdate,
-    admin: User = Depends(require_role("admin")),
-    db: Session = Depends(get_db)
-    ):
+    admin: Annotated[User, Depends(require_role("admin"))],
+    db: Annotated[Session, Depends(get_db)]):
     product = db.get(Product, product_id)
     if not product:
         raise HTTPException(
@@ -150,9 +150,8 @@ def update_product(
 @router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_product(
     product_id: int,
-    admin: User = Depends(require_role("admin")),
-    db: Session = Depends(get_db),
-    ):
+    admin: Annotated[User, Depends(require_role("admin"))],
+    db: Annotated[Session, Depends(get_db)]):
     product = db.get(Product, product_id)
     if not product:
         raise HTTPException(

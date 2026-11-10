@@ -16,16 +16,17 @@ from app.dependencies.auth import get_current_user, require_role
 from app.database import get_db
 from app.schemas.pagination import PaginationResponse
 import math
+from typing import Annotated
 
 router = APIRouter(prefix="/admin/orders", tags=["admin_orders"])
 
 @router.get("/", response_model=PaginationResponse[OrderRead])
 def get_orders(
-    page: int = Query(1, ge=1),
-    limit: int = Query(20, ge=1, le=100),
-    status_id: int | None = None,
-    admin: User = Depends(require_role("admin")),
-    db: Session = Depends(get_db)):
+    admin: Annotated[User, Depends(require_role("admin"))],
+    db: Annotated[Session, Depends(get_db)],
+    status_id: Annotated[int | None, Query()],
+    page: Annotated[int, Query(ge=1)] = 1,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20):
     stmt = select(Order)
     if status_id:
         stmt = stmt.where(Order.status_id == status_id)
@@ -52,8 +53,8 @@ def get_orders(
 def update_status_order(
     order_id: int,
     data:  OrderStatusUpdate,
-    db: Session = Depends(get_db),
-    admin: User = Depends(require_role("admin"))):
+    db: Annotated[Session, Depends(get_db)],
+    admin: Annotated[User, Depends(require_role("admin"))]):
     order = db.get(Order, order_id)
     if not order:
         raise HTTPException(

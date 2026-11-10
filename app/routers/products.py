@@ -8,21 +8,22 @@ from sqlalchemy import select, func
 from app.schemas.pagination import PaginationResponse
 import math
 from decimal import Decimal
+from typing import Annotated
 
 router = APIRouter(prefix="/products", tags=["products"])
 
 @router.get("/", response_model=PaginationResponse[ProductRead])
 def list_products(
+    db: Annotated[Session, Depends(get_db)],
     category_id: int | None = None,
     search: str | None = None,
     min_price: Decimal | None = None,
     max_price: Decimal | None = None,
     sort_by: str = "id",
     order: str = "asc",
-    page: int = Query(1, ge=1),
+    page: Annotated[int, Query(ge=1)] = 1,
     only_available: bool = True,
-    limit: int = Query(20, ge=1, le=100),
-    db: Session = Depends(get_db)):
+    limit: Annotated[int, Query(ge=1, le=100)] = 20):
     if category_id is None:
         stmt = select(Category).where(Category.is_visible == True).order_by(Category.sort).limit(1)
         first_category = db.scalars(stmt).first()
@@ -79,7 +80,8 @@ def list_products(
     }
             
 @router.get("/{product_id}", response_model=ProductRead)
-def get_product(product_id: int, db: Session = Depends(get_db)):
+def get_product(product_id: int,
+                db: Annotated[Session, Depends(get_db)]):
     product = db.get(Product, product_id)
     if not product or not product.is_available:
         raise HTTPException(

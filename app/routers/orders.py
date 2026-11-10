@@ -16,6 +16,7 @@ from app.dependencies.auth import get_current_user
 from app.database import get_db
 from app.schemas.pagination import PaginationResponse
 import math
+from typing import Annotated
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 
@@ -23,8 +24,8 @@ DELIVERY_PRICE = Decimal("200.00")
 
 @router.post("/", response_model=OrderRead, status_code=status.HTTP_201_CREATED)
 def create_router(data: OrderCreate,
-                current_user: User = Depends(get_current_user),
-                db: Session = Depends(get_db)):
+                current_user: Annotated[User, Depends(get_current_user)],
+                db: Annotated[Session, Depends(get_db)]):
     address = db.get(Address, data.address.id)
     if not address or address.user_id != current_user.id:
         raise HTTPException(
@@ -98,10 +99,10 @@ def create_router(data: OrderCreate,
 
 @router.get("/", response_model=PaginationResponse[OrderRead])
 def get_me_orders(
-    page: int = Query(1, ge=1),
-    limit: int = Query(20, ge=1, le=100),
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)):
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    page: Annotated[int, Query(ge=1)] = 1,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20):
     stmt = select(Order).where(Order.user_id == current_user.id)
     total = db.scalar(select(func.count()).select_from(stmt.subquery()))
     stmt = stmt.order_by(Order.created_at.desc())
