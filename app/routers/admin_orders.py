@@ -10,7 +10,7 @@ from app.models.order import Order
 from app.models.order_item import OrderItem
 from app.models.user import User
 from app.models.order_status import OrderStatus
-from app.schemas.order import OrderCreate, OrderRead, OrderStatusUpdate
+from app.schemas.order import OrderCreate, OrderRead, OrderStatusUpdate, OrderCourierUpdate
 from sqlalchemy.orm import Session, joinedload
 from app.dependencies.auth import get_current_user, require_role
 from app.database import get_db
@@ -71,4 +71,31 @@ def update_status_order(
     db.commit()
     db.refresh(order)
     
+    return order
+
+@router.patch("/{order_id}/courier",
+            response_model=OrderRead)
+def assign_courier(
+    db: Annotated[Session, Depends(get_db)],
+    admin: Annotated[User, Depends(require_role("admin"))],
+    order_id: int,
+    data: OrderCourierUpdate):
+    order = db.get(Order, order_id)
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Order not found")
+    user = db.get(User, data.courier_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    if courier.role.name != "courier":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User is not courier"
+        )
+    order.courier_id = courier_id
+    db.commit()
     return order

@@ -28,3 +28,6 @@ class OrderRead(BaseModel):
 
 class OrderStatusUpdate(BaseModel):
     status_id: int
+
+class OrderCourierUpdate(BaseModel):
+    courier_id: int
