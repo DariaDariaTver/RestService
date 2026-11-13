@@ -17,6 +17,7 @@ from app.database import get_db
 from app.schemas.pagination import PaginationResponse
 import math
 from typing import Annotated
+from app.utils.order_transitions import ALLOWED_TRANSITIONS
 
 router = APIRouter(prefix="/admin/orders", tags=["admin_orders"])
 
@@ -67,7 +68,14 @@ def update_status_order(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="New status not found"
         )
-    order.status_id == data.status_id
+    current_status = db.get(OrderStatus, order.status_id)
+    allowed = ALLOWED_TRANSITIONS.get(current_status.name, [])
+    if new_status.name not in allowed:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid status transition"
+        )
+    order.status_id = data.status_id
     db.commit()
     db.refresh(order)
     
@@ -85,8 +93,8 @@ def assign_courier(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Order not found")
-    user = db.get(User, data.courier_id)
-    if not user:
+    courier = db.get(User, data.courier_id)
+    if not courier:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found"
@@ -96,6 +104,7 @@ def assign_courier(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="User is not courier"
         )
-    order.courier_id = courier_id
+    order.courier_id = courier.id
     db.commit()
+    db.refresh(order)
     return order

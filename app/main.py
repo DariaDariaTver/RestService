@@ -6,6 +6,7 @@ from app.routers import admin_products
 from app.routers import admin_category
 from app.routers import cart
 from app.routers import orders
+from app.routers import orders_courier
 from app.routers import admin_orders
 from app.database import engine, Base
 from app.config import settings
@@ -37,7 +38,7 @@ app.include_router(admin_category.router)
 app.include_router(cart.router)
 app.include_router(orders.router)
 app.include_router(admin_orders.router)
-
+app.include_router(orders_courier.router)
 @app.get("/")
 def root():
     return {"message": "Restaurant API работает"}

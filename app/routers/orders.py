@@ -23,16 +23,16 @@ router = APIRouter(prefix="/orders", tags=["orders"])
 DELIVERY_PRICE = Decimal("200.00")
 
 @router.post("/", response_model=OrderRead, status_code=status.HTTP_201_CREATED)
-def create_router(data: OrderCreate,
+def create_order(data: OrderCreate,
                 current_user: Annotated[User, Depends(get_current_user)],
                 db: Annotated[Session, Depends(get_db)]):
-    address = db.get(Address, data.address.id)
+    address = db.get(Address, data.address_id)
     if not address or address.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Address not found"
         )
-    payment_method = db.get(PaymentMethod, data.payment_method.id)
+    payment_method = db.get(PaymentMethod, data.payment_method_id)
     if not payment_method:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -46,56 +46,58 @@ def create_router(data: OrderCreate,
         )
     try:
         stmt = select(Cart).options(
-            joinedload(Cart.items).joinedload(CartItem.product).where(
+            joinedload(Cart.items).joinedload(CartItem.product)).where(
                 Cart.user_id == current_user.id)
-            )
         cart = db.scalars(stmt).first()
         if not cart or not cart.items:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Not items in cart"
             )
+        subtotal = Decimal("0.00")
         for item in cart.items:
             if not item.product.is_available:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Product {item.product.name} is not available"
                 )
-            subtotal = Decimal("0.00")
-            subtotal += item.product.price * item.quantity
+            
+        subtotal += item.product.price * item.quantity
 
-            new_order = Order(
-                user_id=current_user.id,
-                status_id=order_status.id,
-                address_id=address.id,
-                payment_method_id=payment_method.id,
-                comment=data.comment,
-                subtotal=subtotal,
-                delivery_price=DELIVERY_PRICE,
-                total_price=subtotal + DELIVERY_PRICE,
+        new_order = Order(
+            user_id=current_user.id,
+            status_id=order_status.id,
+            address_id=address.id,
+            payment_method_id=payment_method.id,
+            comment=data.comment,
+            subtotal=subtotal,
+            delivery_price=DELIVERY_PRICE,
+            total_price=subtotal + DELIVERY_PRICE,
+        )
+        db.add(new_order)
+        db.flush()
+
+        for item in cart.items:
+            order_item = OrderItem(
+                order_id=new_order.id,
+                product_id=item.product.id,
+                price_at_moment=item.product.price,
+                quantity=item.quantity,
             )
-            db.add(new_order)
-            db.flush()
+            db.add(order_item)
+            db.delete(item)
 
-            for item in cart.items:
-                order_item = OrderItem(
-                    order_id=new_order.id,
-                    product_id=item.product.id,
-                    price_at_moment=item.product.price,
-                    quantity=item.quantity,
-                )
-                db.add(order_item)
-                db.delete(item)
+        db.commit()
+        db.refresh(new_order)
 
-            db.commit()
-            db.refresh(new_order)
-
-    except Exception:
+    except Exception as e:
         db.rollback()
+        print(f"Ошибка при создании заказа: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error order create"
+            detail=f"Error creating order: {e}"
         )
+    return new_order
 
 @router.get("/", response_model=PaginationResponse[OrderRead])
 def get_me_orders(
