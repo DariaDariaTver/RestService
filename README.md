@@ -21,16 +21,16 @@
 |---|---|---|---|
 | id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор роли |
 | name | VARCHAR(100) | UNIQUE, NOT NULL | Название роли (user, admin, manager, courier) |
-| created_at | TIMESTAMP | DEFAULT NOW() | Дата создания |
-| updated_at | TIMESTAMP | DEFAULT NOW() | Дата последнего обновления записи |
+| created_at | TIMESTAMP | DEFAULT NOW(), NOT NULL | Дата создания |
+| updated_at | TIMESTAMP | DEFAULT NOW(), NOT NULL | Дата последнего обновления записи |
 
 ### users
 | Поле | Тип | Ограничения | Описание |
 |---|---|---|---|
 | id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор пользователя |
-| role_id | INTEGER | NOT NULL, REFERENCES roles(id) | Роль пользователя |
+| role_id | INTEGER | NOT NULL, REFERENCES roles(id) ON DELETE RESTRICT, INDEX | Роль пользователя |
 | name | VARCHAR(100) | NOT NULL | Имя пользователя |
-| email | VARCHAR(100) |UNIQUE, NOT NULL | Email пользователя |
+| email | VARCHAR(100) | UNIQUE, NOT NULL | Email пользователя |
 | phone | VARCHAR(20)| UNIQUE, NOT NULL | Номер телефона пользователя |
 | pw_hash | VARCHAR(255) | NOT NULL | Хеш пароля |
 | created_at | TIMESTAMP | DEFAULT NOW() | Дата создания записи | 
