@@ -51,7 +51,7 @@
 | Поле | Тип | Ограничения | Описание |
 |---|---|---|---|
 | id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор товара |
-| category_id | INTEGER | NOT NULL, REFERENCES categories(id) | Категория товара |
+| category_id | INTEGER | NOT NULL, REFERENCES categories(id), ON DELETE RESTRICT | Категория товара |
 | name | VARCHAR(100) | NOT NULL | Название блюда |
 | description | TEXT | | Описание блюда |
 | composition | TEXT | | Состав блюда |
@@ -142,8 +142,8 @@
 | Поле | Тип | Ограничения | Описание |
 |---|---|---|---|
 | id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор токена |
-| user_id | INTEGER | NOT NULL, REFERENCES users(id) | Владелец токена |
-| token | VARCHAR(500) | UNIQUE, NOT NULL | Сам токен |
+| user_id | INTEGER | NOT NULL, REFERENCES users(id), ON DELETE CASCADE | Владелец токена |
+| pw_hash | VARCHAR(500) | UNIQUE, NOT NULL | Сам токен |
 | expires_at | TIMESTAMP | NOT NULL | Дата истечения срока действия токена |
 | revoked | BOOLEAN | DEFAULT FALSE | Флаг отзыва при логауте |
 | created_at | TIMESTAMP | DEFAULT NOW() | Дата создания записи |

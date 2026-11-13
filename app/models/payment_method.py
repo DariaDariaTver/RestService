@@ -1,14 +1,25 @@
-from sqlalchemy import Column, Integer, String, DateTime, Identity
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
+from __future__ import annotations
+from datetime import datetime
+from typing import TYPE_CHECKING
+from sqlalchemy import String, DateTime, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
+if TYPE_CHECKING:
+    from app.models.order import Order
 
 class PaymentMethod(Base):
     __tablename__ = "payment_methods"
 
-    id = Column(Integer, Identity(always=True), primary_key=True)
-    name = Column(String(50), unique=True, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(50), unique=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False)
 
-    orders = relationship("Order", back_populates="payment_method")
+    orders: Mapped[list["Order"]] = relationship(back_populates="payment_method")
