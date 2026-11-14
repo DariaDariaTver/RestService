@@ -66,7 +66,7 @@
 | Поле | Тип | Ограничения | Описание |
 |---|---|---|---|
 | id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор корзины |
-| user_id | INTEGER | UNIQUE, NOT NULL, REFERENCES users(id) | Владелец корзины (у одного пользователя одна корзина)
+| user_id | INTEGER | UNIQUE, NOT NULL, REFERENCES users(id), ON DELETE RESTRICT | Владелец корзины (у одного пользователя одна корзина)
 | created_at | TIMESTAMP | DEFAULT NOW() | Дата создания записи |
 | updated_at | TIMESTAMP | DEFAULT NOW() | Дата последнего обновления записи |
 
@@ -74,8 +74,8 @@
 | Поле | Тип | Ограничения | Описание |
 |---|---|---|---|
 | id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор позиции в корзине |
-| cart_id | INTEGER | NOT NULL, REFERENCES carts(id) | Корзина |
-| product_id | INTEGER | NOT NULL, REFERENCES products(id) | Товар |
+| cart_id | INTEGER | NOT NULL, REFERENCES carts(id), ON DELETE CASCADE| Корзина |
+| product_id | INTEGER | NOT NULL, REFERENCES products(id), ON DELETE RESTRICT| Товар |
 | quantity | INTEGER | NOT NULL | Количество товара |
 | created_at | TIMESTAMP | DEFAULT NOW() | Дата создания записи |
 | updated_at | TIMESTAMP | DEFAULT NOW() | Дата последнего обновления записи |
@@ -85,14 +85,14 @@
 | Поле | Тип | Ограничения | Описание |
 |---|---|---|---|
 | id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор заказа |
-| user_id | INTEGER | NOT NULL, REFERENCES users(id) | Клиент, который оформил заказ |
-| courier_id | INTEGER | REFERENCES users(id) | Курьер, назначенный на заказ |
+| user_id | INTEGER | NOT NULL, REFERENCES users(id), ON DELETE RESTRICT | Клиент, который оформил заказ |
+| courier_id | INTEGER | REFERENCES users(id), ON DELETE SET NULL | Курьер, назначенный на заказ |
 | subtotal | NUMERIC(10, 2) | NOT NULL, CHECK (subtotal >= 0) | Сумма товаров |
 | delivery_price | NUMERIC(10, 2) | NOT NULL, CHECK (delivery_price >= 0) | Стоимость доставки |
 | total_price | NUMERIC(10, 2) | NOT NULL, CHECK (total_price >= 0) | Итоговая сумма (subtotal + delivery_price) |
-| address_id | INTEGER | NOT NULL, REFERENCES addresses(id) | Адрес доставки |
-| status_id | INTEGER | NOT NULL, REFERENCES order_statuses(id) | Статус заказа |
-| payment_method_id | INTEGER | NOT NULL, REFERENCES payment_methods(id) | Способ оплаты |
+| address_id | INTEGER | NOT NULL, REFERENCES addresses(id), ON DELETE RESTRICT | Адрес доставки |
+| status_id | INTEGER | NOT NULL, REFERENCES order_statuses(id), ON DELETE RESTRICT | Статус заказа |
+| payment_method_id | INTEGER | NOT NULL, REFERENCES payment_methods(id), ON DELETE RESTRICT | Способ оплаты |
 | comment | TEXT | | Комментарии к заказу |
 | created_at | TIMESTAMP | DEFAULT NOW() | Дата создания записи |
 | updated_at | TIMESTAMP | DEFAULT NOW() | Дата последнего обновления записи |
@@ -101,8 +101,8 @@
 | Поле | Тип | Ограничения | Описание |
 |---|---|---|---|
 | id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор позиции |
-| order_id | INTEGER | NOT NULL, REFERENCES orders(id) | Заказ |
-| product_id | INTEGER | NOT NULL, REFERENCES products(id) | Товар |
+| order_id | INTEGER | NOT NULL, REFERENCES orders(id), ON DELETE CASCADE | Заказ |
+| product_id | INTEGER | NOT NULL, REFERENCES products(id), ON DELETE RESTRICT | Товар |
 | quantity | INTEGER | NOT NULL, CHECK (quantity > 0) | Количество товара |
 | price_at_moment | NUMERIC(10, 2) | NOT NULL, CHECK (price_at_moment >= 0) | Цена товара на момент оформления | 
 | created_at | TIMESTAMP | DEFAULT NOW() | Дата создания записи |

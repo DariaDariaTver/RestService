@@ -1,15 +1,31 @@
-from sqlalchemy import Column, Integer, Identity, DateTime, ForeignKey
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
+from __future__ import annotations
+from datetime import datetime
+from typing import TYPE_CHECKING
+from sqlalchemy import DateTime, ForeignKey, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
+if TYPE_CHECKING:
+    from app.models.cart_item import CartItem
+    from app.models.user import User
 
 class Cart(Base):
     __tablename__ = "carts"
 
-    id = Column(Integer, Identity(always=True), primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"),
+                                        unique=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False)
 
-    items = relationship("CartItem", back_populates="cart")
-    user = relationship("User", back_populates="cart")
+    items: Mapped[list["CartItem"]] = relationship(
+        back_populates="cart",
+        lazy="selectin",
+        cascade="all, delete-orphan")
+    user: Mapped["User"] = relationship(back_populates="cart")
