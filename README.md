@@ -143,7 +143,7 @@
 |---|---|---|---|
 | id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор токена |
 | user_id | INTEGER | NOT NULL, REFERENCES users(id), ON DELETE CASCADE | Владелец токена |
-| pw_hash | VARCHAR(500) | UNIQUE, NOT NULL | Сам токен |
+| token | VARCHAR(500) | UNIQUE, NOT NULL | Сам токен |
 | expires_at | TIMESTAMP | NOT NULL | Дата истечения срока действия токена |
 | revoked | BOOLEAN | DEFAULT FALSE | Флаг отзыва при логауте |
 | created_at | TIMESTAMP | DEFAULT NOW() | Дата создания записи |

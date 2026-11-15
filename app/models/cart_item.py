@@ -29,4 +29,4 @@ class CartItem(Base):
     __table_args__ = (UniqueConstraint("cart_id", "product_id", name="unique_cart_product"),)
 
     cart: Mapped["Cart"] = relationship(back_populates="items")
-    product: Mapped["Product"] = relationship(back_populates="cart_items", lazy="selectin")
+    product: Mapped["Product"] = relationship(lazy="selectin")

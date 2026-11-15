@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 if TYPE_CHECKING:
     from app.models.category import Category
+    from app.models.order_item import OrderItem
 
 class Product(Base):
     __tablename__ = "products"
@@ -37,5 +38,6 @@ class Product(Base):
     )
 
     category: Mapped["Category"] = relationship(back_populates="products", lazy="selectin")
+    order_items: Mapped[list["OrderItem"]] = relationship(back_populates="product")
 
 

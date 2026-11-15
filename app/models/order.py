@@ -44,7 +44,7 @@ class Order(Base):
 
     user: Mapped["User"] = relationship(foreign_keys=[user_id], back_populates="orders",
                                         lazy="selectin")
-    courier: Mapped["User"] = relationship(foreign_keys=[courier_id],
+    courier: Mapped["User | None"] = relationship(foreign_keys=[courier_id],
                             back_populates="courier_orders")
     address: Mapped["Address"] = relationship(back_populates="orders")
     status: Mapped["OrderStatus"] = relationship(back_populates="orders")

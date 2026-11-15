@@ -35,5 +35,5 @@ class User(Base):
     refresh_tokens: Mapped["RefreshToken"] = relationship(back_populates="user", lazy="select")
     orders: Mapped[list["Order"]] = relationship(back_populates="user",
         foreign_keys="Order.user_id")
-    courier_orders: Mapped[list["Order"]] = relationship(back_populates="courier_orders",
+    courier_orders: Mapped[list["Order"]] = relationship(back_populates="courier",
         foreign_keys="Order.courier_id")
