@@ -370,10 +370,10 @@ CREATE INDEX idx_orders_courier_id ON orders(courier_id)
 **Параметры:**
 - search(str) - поиск по названию 
 - limit(int) - количество записей
-- offset(int) - пропустить
+- page(int) - номер страницы
 
 **Пример запроса:**
-GET /categories?search=суп&limit=20&offset=0
+GET /categories?search=суп&page=1&limit=20
 
 **Ответ(200):**
 ```json
@@ -383,8 +383,7 @@ GET /categories?search=суп&limit=20&offset=0
     {"id": 2, "name": "Горячее", "description": "Вторые блюда"}
   ],
   "total": 5,
-  "limit": 20,
-  "offset": 0,
+  "page": 1,
   "pages": 1
 }
 ```
@@ -394,15 +393,16 @@ GET /categories?search=суп&limit=20&offset=0
 **Параметры:**
 - category_id(int) - фильтр по категории
 - search(str) - поиск по названию
-- min_price(float) - минимальная цена
-- max_price(float) - максимальная цена 
+- min_price(decimal) - минимальная цена
+- max_price(decimal) - максимальная цена 
 - sort_by(str) - сортировка
 - order(str) - направление
 - limit(int) - количество записей
-- offset(int) - пропустить 
+- page(int) - номер страницы
+- only_available - доступность товара
 
 **Пример запроса:**
-GET /products?category_id=3&limit=20&offset=0
+GET /products?category_id=3&page=1&limit=20
 
 **Ответ(200):**
 ```json
@@ -425,7 +425,7 @@ GET /products?category_id=3&limit=20&offset=0
   ],
   "total": 45,
   "limit": 20,
-  "offset": 0,
+  "page": 1,
   "pages": 3
 }
 ```
@@ -601,11 +601,11 @@ GET /products?category_id=3&limit=20&offset=0
 - status(str) - фильтр по статусу
 - sort_by(str) - сортировка
 - order(str) - направление
+- page(int) - номер страницы
 - limit(int) - количество записей
-- offset(int) - пропуск
 
 **Пример запроса:**
-GET /orders?status=delivering&limit=20&offset=0
+GET /orders?status=delivering&page=1&limit=20
 
 **Ответ(200):**
 ```json
@@ -620,7 +620,7 @@ GET /orders?status=delivering&limit=20&offset=0
   ],
   "total": 12,
   "limit": 20,
-  "offset": 0,
+  "page": 1,
   "pages": 1
 }
 ```
@@ -805,10 +805,10 @@ GET /orders?status=delivering&limit=20&offset=0
 - search(str) - поиск пользователя по данным
 - role_id(id) - фильтр по роли
 - limit(int) - количество записей
-- offset(int) - пропустить 
+- page(int) - номер страницы
 
 **Пример запроса:**
-GET /admin/users?role_id=2&limit=20&offset=0
+GET /admin/users?role_id=2&page=1&limit=20
 
 **Ответ(200):**
 ```json
@@ -825,7 +825,7 @@ GET /admin/users?role_id=2&limit=20&offset=0
   ],
   "total": 154,
   "limit": 20,
-  "offset": 0,
+  "page": 1,
   "pages": 8
 }
 ```
@@ -840,10 +840,10 @@ GET /admin/users?role_id=2&limit=20&offset=0
 - sort_by(str) - сортировка по дате, сумме заказов
 - order(str) - направление
 - limit(int) - количество записей
-- offset(int) - пропустить
+- page(int) - номер страницы
 
 **Пример запроса:**
-GET /admin/orders?status=new&limit=20&offset=0
+GET /admin/orders?status=new&page=1&limit=20
 
 **Ответ(200):**
 ```json
@@ -860,7 +860,7 @@ GET /admin/orders?status=new&limit=20&offset=0
   ],
   "total": 3,
   "limit": 20,
-  "offset": 0,
+  "page": 0,
   "pages": 1
 }
 ```
