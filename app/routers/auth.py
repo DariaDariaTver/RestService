@@ -1,3 +1,4 @@
+from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -16,26 +17,26 @@ from app.utils.security import (
 )
 from app.config import settings
 from datetime import datetime, timedelta, timezone
-from sqlalchemy import or_
+from sqlalchemy import or_, select
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/register", response_model=UserRead, status_code=201)
-def register(data: UserCreate, db: Session = Depends(get_db)):
+def register(data: UserCreate, db: Annotated[Session, Depends(get_db)]):
     """Зарегистрировать пользователя."""
-    existing = db.query(User).filter(
+    stmt = select(User).where(
     or_(
         User.email == data.email,
         User.phone == data.phone,
-    )
-    ).first()
-    if existing:
+    ))
+    existing_user = db.execute(stmt).scalars().first()
+    if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email or phone already exists",
         )
-    
-    default_role = db.query(Role).filter(Role.name == "user").first()
+    role_stmt = select(Role).where(Role.name == "user")
+    default_role = db.execute(select(Role)).scalars().first()
     if not default_role:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -44,32 +45,34 @@ def register(data: UserCreate, db: Session = Depends(get_db)):
 
     hashed = hash_password(data.password)
 
-    user = User(
+    new_user = User(
         email=data.email,
         name=data.name,
         phone=data.phone,
         pw_hash=hashed,
         role_id=default_role.id
     )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-
-    return user
+    db.add(new_user)
+    try:
+        db.commit()
+        db.refresh(new_user)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error creating user"
+        )
+    return new_user
 
 @router.post("/login", response_model=TokenResponse, status_code=200)
-def login(data: LoginRequest, db: Session = Depends(get_db)):
+def login(data: LoginRequest, db: Annotated[Session, Depends(get_db)]):
     """Войти в систему."""
-    user = db.query(User).filter(User.email == data.email).first()
-    if not user:
+    stmt = select(User).where(User.email == data.email)
+    user = db.execute(stmt).scalars().first()
+    if not user or not verify_password(data.password, user.pw_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials",
-        )
-    if not verify_password(data.password, user.pw_hash):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials"
         )
 
     access = create_access_token(user.id)
@@ -82,7 +85,13 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
             days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     )
     db.add(refresh_save)
-    db.commit()
+    try:
+        db.commit()
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error save refesh token"
+        )
 
     return {
         "access_token": access,
@@ -92,12 +101,12 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
     }
 
 @router.get("/me", response_model=UserRead, status_code=200)
-def get_me(user: User = Depends(get_current_user)):
+def get_me(user: Annotated[User, Depends(get_current_user)]):
     """Получить данные пользователя."""
     return user
 
 @router.post("/refresh", status_code=200)
-def update_refresh_token(data: RefreshRequest, db: Session = Depends(get_db)):
+def update_refresh_token(data: RefreshRequest, db: Annotated[Session, Depends(get_db)]):
     """Обновить пару токенов: access и refresh."""
     payload = decode_token(data.refresh_token)
     if payload is None:
@@ -110,7 +119,9 @@ def update_refresh_token(data: RefreshRequest, db: Session = Depends(get_db)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token"
         )
-    token_save = db.query(RefreshToken).filter(RefreshToken.token == data.refresh_token).first()
+    
+    stmt = select(RefreshToken).where(RefreshToken.token == data.refresh_token)
+    token_save = db.execute(stmt).scalars().first()
     if not token_save:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -138,7 +149,13 @@ def update_refresh_token(data: RefreshRequest, db: Session = Depends(get_db)):
         ),
     )
     db.add(new_token_save)
-    db.commit()
+    try:
+        db.commit()
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error update token"
+        )
 
     new_access = create_access_token(user_id)
 
@@ -149,10 +166,15 @@ def update_refresh_token(data: RefreshRequest, db: Session = Depends(get_db)):
     }
 
 @router.post("/logout", status_code=204)
-def logout(data: RefreshRequest, db: Session = Depends(get_db)):
+def logout(data: RefreshRequest, db: Annotated[Session, Depends(get_db)]):
     """Выйти из системы."""
-    token_save = db.query(RefreshToken).filter(RefreshToken.token == data.refresh_token).first()
+    stmt = select(RefreshToken).where(RefreshToken.token == data.refresh_token)
+    token_save = db.execute(stmt).scalars().first()
     if token_save:
         token_save.revoked = True
-        db.commit()
-    
+        try:
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            pass
+        return None
