@@ -36,7 +36,7 @@ def register(data: UserCreate, db: Annotated[Session, Depends(get_db)]):
             detail="Email or phone already exists",
         )
     role_stmt = select(Role).where(Role.name == "user")
-    default_role = db.execute(select(Role)).scalars().first()
+    default_role = db.execute(role_stmt).scalars().first()
     if not default_role:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

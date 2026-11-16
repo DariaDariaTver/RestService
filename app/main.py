@@ -8,6 +8,7 @@ from app.routers import cart
 from app.routers import orders
 from app.routers import orders_courier
 from app.routers import admin_orders
+from app.routers import addresses
 from app.database import engine, Base
 from app.config import settings
 from fastapi import FastAPI
@@ -39,6 +40,8 @@ app.include_router(cart.router)
 app.include_router(orders.router)
 app.include_router(admin_orders.router)
 app.include_router(orders_courier.router)
+app.include_router(addresses.router)
+
 @app.get("/")
 def root():
     return {"message": "Restaurant API работает"}
