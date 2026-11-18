@@ -12,8 +12,7 @@ class CartItem(Base):
     __tablename__ = "cart_items"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    product_id: Mapped[int] = mapped_column(ForeignKey("products.id", ondelete="RESTRICT"),
-                                            unique=True)
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id", ondelete="RESTRICT"))
     cart_id: Mapped[int] = mapped_column(ForeignKey("carts.id", ondelete="CASCADE"))
     quantity: Mapped[int] = mapped_column(nullable=False)
     created_at: Mapped[datetime] = mapped_column(

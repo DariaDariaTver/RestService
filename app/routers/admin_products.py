@@ -133,19 +133,27 @@ def update_product(
 
     if data.category_id is not None:
         category = db.get(Category, data.category_id)
-    if not category:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Category not found"
-        )
-    
-    update_data = data.model_dump(exclude_unset=True)
+        if not category:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Category not found"
+            )
+        product.category_id = data.category_id
+
+    update_data = data.model_dump(exclude_unset=True, exclude={"category_id"})
     for key, value in update_data.items():
         setattr(product, key, value)
-
-    db.commit()
-    db.refresh(product)
-    return product
+        try:
+            db.commit()
+            db.refresh(product)
+        except Exception as e:
+            db.rollback()
+            print(f"Error update:{e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal server error"
+            )
+        return product
 
 @router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_product(

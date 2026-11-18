@@ -32,7 +32,7 @@ def get_orders(
     if status_id:
         stmt = stmt.where(Order.status_id == status_id)
         
-    total = db.scalar(select(func.count()).select_from(stmt.subquery))
+    total = db.scalar(select(func.count()).select_from(stmt.subquery()))
 
     stmt = stmt.order_by(Order.created_at.desc())
 

@@ -38,8 +38,7 @@ def get_curier_orders(
         "pages": pages
     }
 
-@router.patch("/courier/orders/{order_id}/status",
-            response_model=OrderRead)
+@router.patch("/{order_id}/status", response_model=OrderRead)
 def update_status_order(
     current_user: Annotated[User, Depends(require_role("courier"))],
     db: Annotated[Session, Depends(get_db)],
@@ -56,7 +55,7 @@ def update_status_order(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="This is not your courier"
         )
-    new_status = select(OrderStatus, data.status_id)
+    new_status = db.get(OrderStatus, data.status_id)
     if not new_status:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

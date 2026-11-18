@@ -17,7 +17,8 @@ class Order(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"), nullable=False)
-    courier_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    courier_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     subtotal: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     delivery_price: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     total_price: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
@@ -37,7 +38,7 @@ class Order(Base):
         onupdate=func.now(),
         nullable=False)
     __table_args__ = (
-        CheckConstraint("subtotal > = 0", name="subtotal_not_negative"),
+        CheckConstraint("subtotal >= 0", name="subtotal_not_negative"),
         CheckConstraint("delivery_price >= 0", name="delivery_price_not_negative"),
         CheckConstraint("total_price >= 0", name="total_price_not_negative")
     )

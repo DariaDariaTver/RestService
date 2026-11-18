@@ -48,7 +48,7 @@ def update_address(data: UpdateAddress,
                    current_user: Annotated[User, Depends(get_current_user)],
                    db: Annotated[Session, Depends(get_db)]):
     address = db.get(Address, address_id)
-    if not address or not address.user_id != current_user.id:
+    if not address or address.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Address not found"
@@ -57,10 +57,9 @@ def update_address(data: UpdateAddress,
     for key, value in update_data.items():
         setattr(address, key, value)
 
-        db.commit()
-        db.refresh(address)
-
-        return address
+    db.commit()
+    db.refresh(address)
+    return address
 
 @router.delete("/{address_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_address(address_id: int,

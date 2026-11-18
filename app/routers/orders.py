@@ -44,10 +44,11 @@ def create_order(data: OrderCreate,
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Order status not found"
         )
+    
     try:
         stmt = select(Cart).options(
-            joinedload(Cart.items).joinedload(CartItem.product)).where(
-                Cart.user_id == current_user.id)
+                joinedload(Cart.items).joinedload(CartItem.product)).where(
+                    Cart.user_id == current_user.id)
         cart = db.scalars(stmt).first()
         if not cart or not cart.items:
             raise HTTPException(
@@ -61,10 +62,9 @@ def create_order(data: OrderCreate,
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Product {item.product.name} is not available"
                 )
+            subtotal += item.product.price * item.quantity
             
-        subtotal += item.product.price * item.quantity
-
-        new_order = Order(
+            new_order = Order(
             user_id=current_user.id,
             status_id=order_status.id,
             address_id=address.id,
@@ -72,10 +72,10 @@ def create_order(data: OrderCreate,
             comment=data.comment,
             subtotal=subtotal,
             delivery_price=DELIVERY_PRICE,
-            total_price=subtotal + DELIVERY_PRICE,
-        )
-        db.add(new_order)
-        db.flush()
+            total_price=subtotal + DELIVERY_PRICE,)
+            
+            db.add(new_order)
+            db.flush()
 
         for item in cart.items:
             order_item = OrderItem(
@@ -87,15 +87,17 @@ def create_order(data: OrderCreate,
             db.add(order_item)
             db.delete(item)
 
-        db.commit()
-        db.refresh(new_order)
+            db.commit()
+    except HTTPException:
+        db.rollback()
+        raise
 
     except Exception as e:
         db.rollback()
         print(f"Ошибка при создании заказа: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error creating order: {e}"
+            detail="Internal server error"
         )
     return new_order
 
