@@ -2,6 +2,16 @@
 
 Бэкенд сервис для ресторана. Обеспечивает регистрацию пользователей, работу с каталогом блюд, работу с корзиной и управление заказами.
 
+## Стек технологий
+* **Язык:**  Python 3.12
+* **Фреймворк:**  FastAPI
+* **База данных:**  PostgreSQL
+* **ORM:**  SQLAlchemy 2.0
+* **Валидация данных:** Pydantic v2
+* **Аутентификация:** JWT (Access + Refresh токены)
+* **Безопасность:** bcrypt
+
+
 ## Таблицы
 - roles
 - users 
@@ -33,8 +43,8 @@
 | email | VARCHAR(100) | UNIQUE, NOT NULL | Email пользователя |
 | phone | VARCHAR(20)| UNIQUE, NOT NULL | Номер телефона пользователя |
 | pw_hash | VARCHAR(255) | NOT NULL | Хеш пароля |
-| created_at | TIMESTAMP | DEFAULT NOW() | Дата создания записи | 
-| updated_at | TIMESTAMP | DEFAULT NOW() | Дата последнего обновления записи |
+| created_at | TIMESTAMP | DEFAULT NOW(), NOT NULL | Дата создания записи | 
+| updated_at | TIMESTAMP | DEFAULT NOW(), NOT NULL | Дата последнего обновления записи |
 
 ### categories
 | Поле | Тип | Ограничения | Описание |
@@ -44,14 +54,14 @@
 | description | TEXT | | Описание категории |
 | sort | INTEGER | DEFAULT 0 | Порядок отображения категории |
 | is_visible | BOOLEAN | DEFAULT TRUE | Флаг видимости категории |
-| created_at | TIMESTAMP | DEFAULT NOW() | Дата создания записи |
-| updated_at | TIMESTAMP | DEFAULT NOW() | Дата последнего обновления записи |
+| created_at | TIMESTAMP | DEFAULT NOW(), NOT NULL | Дата создания записи |
+| updated_at | TIMESTAMP | DEFAULT NOW(), NOT NULL | Дата последнего обновления записи |
 
 ### products
 | Поле | Тип | Ограничения | Описание |
 |---|---|---|---|
 | id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор товара |
-| category_id | INTEGER | NOT NULL, REFERENCES categories(id), ON DELETE RESTRICT | Категория товара |
+| category_id | INTEGER | NOT NULL, REFERENCES categories(id), ON DELETE RESTRICT, INDEX | Категория товара |
 | name | VARCHAR(100) | NOT NULL | Название блюда |
 | description | TEXT | | Описание блюда |
 | composition | TEXT | | Состав блюда |
@@ -59,16 +69,16 @@
 | price | NUMERIC(10, 2) | NOT NULL CHECK (price >= 0) | Цена блюда |
 | image | VARCHAR(255) | | Путь к файлу изображения |
 | is_available | BOOLEAN | DEFAULT TRUE | Флаг доступности товара в каталоге | 
-| created_at | TIMESTAMP | DEFAULT NOW() | Дата создания записи |
-| updated_at | TIMESTAMP | DEFAULT NOW() | Дата последнего обновления записи |
+| created_at | TIMESTAMP | DEFAULT NOW(), NOT NULL | Дата создания записи |
+| updated_at | TIMESTAMP | DEFAULT NOW(), NOT NULL | Дата последнего обновления записи |
 
 ### carts
 | Поле | Тип | Ограничения | Описание |
 |---|---|---|---|
 | id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор корзины |
-| user_id | INTEGER | UNIQUE, NOT NULL, REFERENCES users(id), ON DELETE RESTRICT | Владелец корзины (у одного пользователя одна корзина)
-| created_at | TIMESTAMP | DEFAULT NOW() | Дата создания записи |
-| updated_at | TIMESTAMP | DEFAULT NOW() | Дата последнего обновления записи |
+| user_id | INTEGER | UNIQUE, NOT NULL, REFERENCES users(id), ON DELETE RESTRICT, INDEX | Владелец корзины (у одного пользователя одна корзина)
+| created_at | TIMESTAMP | DEFAULT NOW(), NOT NULL | Дата создания записи |
+| updated_at | TIMESTAMP | DEFAULT NOW(), NOT NULL | Дата последнего обновления записи |
 
 ### cart_items
 | Поле | Тип | Ограничения | Описание |
@@ -77,8 +87,8 @@
 | cart_id | INTEGER | NOT NULL, REFERENCES carts(id), ON DELETE CASCADE| Корзина |
 | product_id | INTEGER | NOT NULL, REFERENCES products(id), ON DELETE RESTRICT| Товар |
 | quantity | INTEGER | NOT NULL | Количество товара |
-| created_at | TIMESTAMP | DEFAULT NOW() | Дата создания записи |
-| updated_at | TIMESTAMP | DEFAULT NOW() | Дата последнего обновления записи |
+| created_at | TIMESTAMP | DEFAULT NOW(), NOT NULL | Дата создания записи |
+| updated_at | TIMESTAMP | DEFAULT NOW(), NOT NULL | Дата последнего обновления записи |
 | - | - | UNIQUE (cart_id, product_id) | Один товар в корзине встречается только раз |
 
 ### orders
@@ -94,60 +104,59 @@
 | status_id | INTEGER | NOT NULL, REFERENCES order_statuses(id), ON DELETE RESTRICT | Статус заказа |
 | payment_method_id | INTEGER | NOT NULL, REFERENCES payment_methods(id), ON DELETE RESTRICT | Способ оплаты |
 | comment | TEXT | | Комментарии к заказу |
-| created_at | TIMESTAMP | DEFAULT NOW() | Дата создания записи |
-| updated_at | TIMESTAMP | DEFAULT NOW() | Дата последнего обновления записи |
+| created_at | TIMESTAMP | DEFAULT NOW(), NOT NULL | Дата создания записи |
+| updated_at | TIMESTAMP | DEFAULT NOW(), NOT NULL | Дата последнего обновления записи |
 
 ### order_items
 | Поле | Тип | Ограничения | Описание |
 |---|---|---|---|
 | id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор позиции |
-| order_id | INTEGER | NOT NULL, REFERENCES orders(id), ON DELETE CASCADE | Заказ |
-| product_id | INTEGER | NOT NULL, REFERENCES products(id), ON DELETE RESTRICT | Товар |
+| order_id | INTEGER | NOT NULL, REFERENCES orders(id), ON DELETE CASCADE, INDEX | Заказ |
+| product_id | INTEGER | NOT NULL, REFERENCES products(id), ON DELETE RESTRICT, INDEX | Товар |
 | quantity | INTEGER | NOT NULL, CHECK (quantity > 0) | Количество товара |
 | price_at_moment | NUMERIC(10, 2) | NOT NULL, CHECK (price_at_moment >= 0) | Цена товара на момент оформления | 
-| created_at | TIMESTAMP | DEFAULT NOW() | Дата создания записи |
-| updated_at | TIMESTAMP | DEFAULT NOW() | Дата последнего обновления записи |
+| created_at | TIMESTAMP | DEFAULT NOW(), NOT NULL | Дата создания записи |
+| updated_at | TIMESTAMP | DEFAULT NOW(), NOT NULL | Дата последнего обновления записи |
 | - | - | UNIQUE (order_id, product_id) | Один товар в заказе встречается только раз |
 
 ### addresses
 | Поле | Тип | Ограничения | Описание |
 |---|---|---|---|
 | id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор записи |
-| user_id | INTEGER | NOT NULL, REFERENCES users(id) | Владелец адреса |
+| user_id | INTEGER | NOT NULL, REFERENCES users(id), INDEX | Владелец адреса |
 | city | VARCHAR(100) | NOT NULL | Город |
 | street | VARCHAR(150) | NOT NULL | Улица |
 | house | VARCHAR(20) | NOT NULL | Номер дома |
 | apartment | VARCHAR(20) | | Номер квартиры |
-| is_default | BOOLEAN | DEFAULT FALSE | Адрес доставки по умолчанию | 
-| created_at | TIMESTAMP | DEFAULT NOW() | Дата создания записи |
-| updated_at | TIMESTAMP | DEFAULT NOW() | Дата последнего обновления записи |
+| is_default | BOOLEAN | DEFAULT FALSE, NOT NULL | Адрес доставки по умолчанию | 
+| created_at | TIMESTAMP | DEFAULT NOW(), NOT NULL | Дата создания записи |
+| updated_at | TIMESTAMP | DEFAULT NOW(), NOT NULL | Дата последнего обновления записи |
 
 ### order_statuses
 | Поле | Тип | Ограничения | Описание |
 |---|---|---|---|
 | id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор статуса заказа |
 | name | VARCHAR(50) | UNIQUE, NOT NULL | Название статуса (new, confirmed, preparing, delivering, completed, cancelled)
-| created_at | TIMESTAMP | DEFAULT NOW () | Дата создания записи |
-| updated_at | TIMESTAMP | DEFAULT NOW () | Дата последнего обновления записи |
+| created_at | TIMESTAMP | DEFAULT NOW (), NOT NULL | Дата создания записи |
+| updated_at | TIMESTAMP | DEFAULT NOW (), NOT NULL | Дата последнего обновления записи |
 
 ### payment_methods 
 | Поле | Тип | Ограничения | Описание |
 |---|---|---|---|
 | id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор способа оплаты |
 | name | VARCHAR(50) | UNIQUE, NOT NULL | Название способа оплаты (card, cash, online) | 
-| created_at | TIMESTAMP | DEFAULT NOW () | Дата создания записи |
-| updated_at | TIMESTAMP | DEFAULT NOW () | Дата последнего обновления записи |
+| created_at | TIMESTAMP | DEFAULT NOW (), NOT NULL | Дата создания записи |
+| updated_at | TIMESTAMP | DEFAULT NOW (), NOT NULL | Дата последнего обновления записи |
 
 ### refresh_tokens
 | Поле | Тип | Ограничения | Описание |
 |---|---|---|---|
 | id | INTEGER | PRIMARY KEY, GENERATED ALWAYS AS IDENTITY | Уникальный идентификатор токена |
-| user_id | INTEGER | NOT NULL, REFERENCES users(id), ON DELETE CASCADE | Владелец токена |
+| user_id | INTEGER | NOT NULL, REFERENCES users(id), ON DELETE CASCADE, INDEX | Владелец токена |
 | token | VARCHAR(500) | UNIQUE, NOT NULL | Сам токен |
 | expires_at | TIMESTAMP | NOT NULL | Дата истечения срока действия токена |
-| revoked | BOOLEAN | DEFAULT FALSE | Флаг отзыва при логауте |
-| created_at | TIMESTAMP | DEFAULT NOW() | Дата создания записи |
-| updated_at | TIMESTAMP | DEFAULT NOW() | Дата последнего обновления записи |
+| revoked | BOOLEAN | DEFAULT FALSE, NOT NULL | Флаг отзыва при логауте |
+| created_at | TIMESTAMP | DEFAULT NOW(), NOT NULL | Дата создания записи |
 
 
 ## Связи таблиц
@@ -216,6 +225,11 @@ CREATE INDEX idx_orders_courier_id ON orders(courier_id)
   "role_id": 1
 }
 ```
+
+**Ошибки:**
+- 400 Bad Request - email, телефон уже существует или неверные данные
+- 500 Internal Server Error - ошибка базы данных или сервера
+
 #### POST /auth/login - Выдача токена
 
 **Запрос:**
@@ -233,6 +247,11 @@ CREATE INDEX idx_orders_courier_id ON orders(courier_id)
   "token_type": "bearer"
   }
 ```
+
+**Ошибки:**
+- 401 Unauthorized - невалидный или непереданный токен
+- 500 Internal Server Error - ошибка базы данных или сервера
+
 #### POST /auth/refresh - Обновление токена
 
 **Запрос:**
@@ -248,9 +267,13 @@ CREATE INDEX idx_orders_courier_id ON orders(courier_id)
 }
 ```
 
+**Ошибки:**
+- 401 Unauthorized - невалидный или отозванный refresh-токен
+- 500 Internal Server Error - ошибка базы данных или сервера
+
 ### Пользователь
 
-#### GET /users/me - Получить свой профиль
+#### GET /auth/me - Получить свой профиль
 
 **Ответ(200):**
 ```json
@@ -263,28 +286,21 @@ CREATE INDEX idx_orders_courier_id ON orders(courier_id)
 }
 ```
 
-#### PATCH /users/me - Обновить свой профиль
+#### POST /auth/logout - Выйти из системы
 
 **Запрос:**
 ```json
 {
-  "name": "Дарья",
-  "phone": "+7123456789"
+  "refresh_token": "j28302ds..."
 }
 ```
 
-**Ответ(200):**
-```json
-{
-  "id": 22,
-  "name": "Дарья",
-  "email": "daria@mail.com",
-  "phone": "+712345789",
-  "role_id": 1
-}
-```
+**Ответ(204)**
 
-#### GET /users/me/addresses - Получить свои адреса
+**Ошибки:**
+- 204 No Content - успешный выход из системы
+
+#### GET /addresses - Получить свои адреса
 
 **Ответ(200):**
 ```json
@@ -307,7 +323,11 @@ CREATE INDEX idx_orders_courier_id ON orders(courier_id)
 }
 ]
 ```
-#### POST /users/me/addresses - Добавить адрес
+
+**Ошибки:**
+- 500 Internal Server Error - ошибка базы данных или сервера
+
+#### POST /addresses - Добавить адрес
 
 **Запрос:**
 ```json
@@ -331,7 +351,10 @@ CREATE INDEX idx_orders_courier_id ON orders(courier_id)
 }
 ```
 
-#### PATCH /users/me/addresses/{id} - Обновить текущий адрес 
+**Ошибки:**
+- 500 Internal Server Error - ошибка базы данных или сервера
+
+#### PATCH /addresses/{id} - Обновить текущий адрес 
 
 **Запрос:**
 ```json
@@ -356,12 +379,19 @@ CREATE INDEX idx_orders_courier_id ON orders(courier_id)
 }
 ```
 
-#### DELETE /users/me/addresses/{id} - Удалить адрес
+**Ошибки:**
+- 404 Not Found - адрес не найден
+
+#### DELETE /addresses/{id} - Удалить адрес
 
 **Параметр пути:**
 - id(int) - id адреса для удаления 
 
 **Ответ(204)**
+
+**Ошибки:**
+- 404 Not Found - адрес не найден
+- 204 No content - успешное удаление
 
 ### Каталог
 
@@ -450,6 +480,9 @@ GET /products?category_id=3&page=1&limit=20
 }
 ```
 
+**Ошибки:**
+- 404 Not Found - товар не найден
+
 ### Корзина
 
 #### GET /cart - Смотреть свою корзину
@@ -502,6 +535,11 @@ GET /products?category_id=3&page=1&limit=20
 }
 ```
 
+**Ошибки:**
+- 400 Bad Request - товара нет в наличии 
+- 404 Not Found - товар не найден
+- 409 Conflict - операция прервана
+
 #### PATCH /cart/items/{id} - Обновить количество товара
 
 **Параметр пути:**
@@ -530,6 +568,10 @@ GET /products?category_id=3&page=1&limit=20
 }
 ```
 
+**Ошибки:**
+- 404 Not Found - товар не найден
+- 403 Forbidden - товар не принадлежит данной корзине
+
 #### DELETE /cart/items/{id} - Удалить товар из корзины
 
 **Параметр пути:**
@@ -537,9 +579,17 @@ GET /products?category_id=3&page=1&limit=20
 
 **Ответ(204)**
 
+**Ошибки:**
+- 404 Not Found - товар не найден
+- 403 Forbidden - товар не принадлежит данной корзине 
+- 204 No Content - успешное удаление
+
 #### DELETE /cart/clear - Очистить корзину
 
-**Ответ(204):** No Content
+**Ответ(204)**
+
+**Ошибки:**
+- 204 No Content - успешное удаление
 
 ### Заказы
 
@@ -595,6 +645,12 @@ GET /products?category_id=3&page=1&limit=20
   "created_at": "2026-09-27T22:00:00Z"
 }
 ```
+
+**Ошибки:**
+- 404 Not Found - адрес, способ оплаты или статус заказа не найдены
+- 400 Bad Request - корзина пуста или позиция корзины не в наличии 
+- 500 Internal Server Error - ошибка базы данных или сервера
+
 #### GET /orders - Смотреть свои заказы
 
 **Параметры:**
@@ -625,42 +681,51 @@ GET /orders?status=delivering&page=1&limit=20
 }
 ```
 
-#### GET /orders/{id} - Смотреть позиции заказа
+### Админка
 
-**Параметр пути:**
--id(int) - id заказа
+#### GET /admin/categories - Список категорий в админке
+
+**Параметры:**
+- search(str) - поиск по названию
+- page(int) - номер страницы
+- limit(int) - количество записей
+
+**Пример запроса:**
+GET /admin/categories?search=soup&page=1&limit=20
 
 **Ответ(200):**
 ```json
 {
-  "id": 148,
-  "user_id": 23,
-  "status": "new",
-  "subtotal": 1150.00,
-  "delivery_price": 100.00,
-  "total_price": 1250.00,
-  "address": {
-    "id": 5,
-    "city": "Тверь",
-    "street": "Советская",
-    "house": "12",
-    "apartment": "34"
-    },
-  "payment_method_id": 1,
-  "comment": "Домофон не работает",
-  "items": [
+  "items": [ 
   {
-  "product_id": 11,
-  "name": "Борщ",
-  "quantity": 1,
-  "price_at_moment": 350.00
-    }
-  ],
-  "created_at": "2026-09-27T22:00:00Z"
+  "id": 1,
+  "name": "Супы",
+  "description": "Первые блюда"
+  }
+],
+"total": 5,
+"limit": 20,
+"page": 1,
+"pages": 1
 }
 ```
 
-### Админка
+#### GET /admin/categories/{id} - Получить категорию по id
+
+**Параметр пути:**
+- id(int) - id категории
+
+**Ответ(200):**
+```json
+{
+  "id": 1,
+  "name": "Супы",
+  "description": "Первые блюда"
+}
+```
+
+**Ошибки:**
+- 404 Not Found - категория не найдена
 
 #### POST /admin/categories - Создать категорию товаров
 
@@ -681,6 +746,9 @@ GET /orders?status=delivering&page=1&limit=20
   "created_at": "2026-09-28T22:00:00Z"
 }
 ```
+
+**Ошибки:**
+- 400 Bad Request - категория с таким именем уже существует 
 
 #### PATCH /admin/categories/{id} - Обновить категорию
 
@@ -705,12 +773,42 @@ GET /orders?status=delivering&page=1&limit=20
 }
 ```
 
+**Ошибки:**
+- 404 Not Found - категория не найдена
+
 #### DELETE /admin/categories/{id} - Удалить категорию
 
 **Параметр пути:**
 - id(int) - id категории
 
 **Ответ(204)**
+
+**Ошибки:**
+- 404 Not Found - категория не найдена
+- 204 No content - успешное удаление
+
+#### GET /admin/products/{id} - Получить товар по id
+
+**Параметр пути:**
+- id(int) - id товара
+
+**Ответ(200):**
+```json
+{
+  "id": 22,
+  "category_id": 3,
+  "name": "Отбивная",
+  "description": "Свиная отбивная с салатом",
+  "composition": "Свинина, айсберг, соус",
+  "weight": 400.00,
+  "price": 650.00,
+  "is_available": true,
+  "image": "/static/images/otbivnaya.jpg"
+}
+```
+
+**Ошибки:**
+- 404 Not Found - товар не найден
 
 #### POST /admin/products - Создать новый товар
 
@@ -742,6 +840,9 @@ GET /orders?status=delivering&page=1&limit=20
   "created_at": "2026-09-28T22:00:00Z"
 }
 ```
+
+**Ошибки:**
+- 400 Bad Request - товар с таким именем уже существует или категория не найдена
 
 #### PATCH /admin/products/{id} - Обновить товар
 
@@ -777,18 +878,6 @@ GET /orders?status=delivering&page=1&limit=20
 }
 ```
 
-#### PATCH /admin/products/{id}/availability - Скрыть товар
-
-**Параметр пути:**
-- id(int) - id товара 
-
-**Запрос:**
-```json
-{
-  "is_available": false
-}
-```
-
 **Ответ(200):**
 ```json
 {
@@ -799,36 +888,21 @@ GET /orders?status=delivering&page=1&limit=20
 }
 ```
 
-#### GET /admin/users - Смотреть всех пользователей
+**Ошибки:**
+- 404 Not Found - товар не найден
+- 400 Bad Request - категория не найдена
+- 500 Internal Server Error - ошибка базы данных или сервера
 
-**Параметры:**
-- search(str) - поиск пользователя по данным
-- role_id(id) - фильтр по роли
-- limit(int) - количество записей
-- page(int) - номер страницы
+#### DELETE /admin/products/{id} - Удалить товар по id
 
-**Пример запроса:**
-GET /admin/users?role_id=2&page=1&limit=20
+**Параметр пути:**
+- id(int) - id товара
 
-**Ответ(200):**
-```json
-{
-  "items": [
-    {
-      "id": 23,
-      "name": "Дарья",
-      "email": "daria@mail.com",
-      "phone": "+79123456789",
-      "role_id": 1,
-      "created_at": "2026-09-28T22:00:00Z"
-    }
-  ],
-  "total": 154,
-  "limit": 20,
-  "page": 1,
-  "pages": 8
-}
-```
+**Ответ(204)**
+
+**Ошибки:**
+- 404 Not Found - товар не найден
+- 204 No Content - успешное удаление
 
 #### GET /admin/orders - Смотреть все заказы
 
@@ -886,6 +960,10 @@ GET /admin/orders?status=new&page=1&limit=20
 }
 ```
 
+**Ошибки:**
+- 404 Not Found - заказ не найден
+- 400 Bad Request - статус не найден или недопустимый переход статуса
+
 #### PATCH /admin/orders/{id}/courier - Назначить курьера
 
 **Параметр пути:**
@@ -902,11 +980,17 @@ GET /admin/orders?status=new&page=1&limit=20
 ```json
 {
   "id": 148,
+  "user_id": 22,
   "courier_id": 42,
-  "status": "delivering",
+  "status": "new",
+  "total_price": 1000.00,
   "updated_at": "2026-09-28T22:00:00Z"
 }
 ```
+
+**Ошибки:**
+- 404 Not Found - заказ или пользователь не найден
+- 400 Bad Request - пользователь не является курьером
 
 ### Курьер
 
@@ -951,6 +1035,11 @@ GET /admin/orders?status=new&page=1&limit=20
   "updated_at": "2026-09-28T22:00:00Z"
 }
 ```
+
+**Ошибки:**
+- 404 No Found - заказ не найден
+- 403 Forbidden - заказ не принадлежит данному курьеру
+- 400 Bad Request - нет статуса заказа или он невалидный
 
 ## Справочник
 
