@@ -40,8 +40,7 @@ class Order(Base):
     __table_args__ = (
         CheckConstraint("subtotal >= 0", name="subtotal_not_negative"),
         CheckConstraint("delivery_price >= 0", name="delivery_price_not_negative"),
-        CheckConstraint("total_price >= 0", name="total_price_not_negative")
-    )
+        CheckConstraint("total_price >= 0", name="total_price_not_negative"),)
 
     user: Mapped["User"] = relationship(foreign_keys=[user_id], back_populates="orders",
                                         lazy="selectin")

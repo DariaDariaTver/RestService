@@ -34,8 +34,7 @@ class Product(Base):
 
     __table_args__ = (
         CheckConstraint("weight > 0", name="check_weight_positive"),
-        CheckConstraint("price >= 0", name="check_price_non_negative")
-    )
+        CheckConstraint("price >= 0", name="check_price_non_negative"),)
 
     category: Mapped["Category"] = relationship(back_populates="products", lazy="selectin")
     order_items: Mapped[list["OrderItem"]] = relationship(back_populates="product")

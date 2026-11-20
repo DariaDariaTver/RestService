@@ -32,7 +32,7 @@ class OrderItem(Base):
     __table_args__ = (
         CheckConstraint("price_at_moment >= 0", name="check_price_at_moment_not_negative"),
         CheckConstraint("quantity > 0", name="check_quantity_positive"),
-        UniqueConstraint("order_id", "product_id", name="unique_order_product"))
+        UniqueConstraint("order_id", "product_id", name="unique_order_product"),)
     
     order: Mapped["Order"] = relationship(back_populates="items")
     product: Mapped["Product"] = relationship(back_populates="order_items", lazy="selectin")
