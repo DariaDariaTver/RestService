@@ -339,7 +339,7 @@ CREATE INDEX idx_orders_courier_id ON orders(courier_id)
   "is_default": false
 }
 ```
-**Ответ(200):**
+**Ответ(201):**
 ```json
 {
   "id": 24,
@@ -429,7 +429,7 @@ GET /categories?search=суп&page=1&limit=20
 - order(str) - направление
 - limit(int) - количество записей
 - page(int) - номер страницы
-- only_available - доступность товара
+- is_available - доступность товара
 
 **Пример запроса:**
 GET /products?category_id=3&page=1&limit=20
@@ -449,7 +449,7 @@ GET /products?category_id=3&page=1&limit=20
       "id": 12,
       "name": "Пельмени домашние",
       "price": 300.00,
-      "is_avaiable": true,
+      "is_available": true,
       "category_id": 4
     }
   ],
@@ -878,16 +878,6 @@ GET /admin/categories?search=soup&page=1&limit=20
 }
 ```
 
-**Ответ(200):**
-```json
-{
-  "id": 11,
-  "name": "Борщ Тверской",
-  "is_available": false,
-  "updated_at": "2026-09-28T22:00:00Z"
-}
-```
-
 **Ошибки:**
 - 404 Not Found - товар не найден
 - 400 Bad Request - категория не найдена
@@ -934,7 +924,7 @@ GET /admin/orders?status=new&page=1&limit=20
   ],
   "total": 3,
   "limit": 20,
-  "page": 0,
+  "page": 1,
   "pages": 1
 }
 ```
@@ -1008,7 +998,7 @@ GET /admin/orders?status=new&page=1&limit=20
         "city": "Тверь",
         "street": "Фарафоновой",
         "house": "35",
-        "apartment": "33",
+        "apartment": "33"
       },
       "created_at": "2026-09-24T22:00:00Z"
     }
