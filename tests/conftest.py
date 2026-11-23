@@ -32,11 +32,15 @@ TestingSessionLocal = sessionmaker(autocommit=False,
 def db_session() -> Generator[Session, None, None]:
     Base.metadata.create_all(bind=engine)
     db = TestingSessionLocal()
+    user_role = Role(name="user")
+    db.add(user_role)
+    db.commit()
     try:
         yield db
     finally:
         db.close()
-
+    Base.metadata.drop_all(bind=engine)
+    
 @pytest.fixture(scope="function")
 def client(
     db_session: Annotated[Session, pytest.fixture]) -> Generator[TestClient, None, None]:
