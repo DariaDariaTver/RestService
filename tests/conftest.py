@@ -53,3 +53,18 @@ def client(
         with TestClient(app) as c:
             yield c
         app.dependency_overrides.clear()
+@pytest.fixture(scope="function")
+def auth_headers(client: TestClient) -> dict:
+    payload = {
+        "email": "test_auth@mail.ru",
+        "password": "testtest123",
+        "name": "Auth User",
+        "phone": "+79998887766"
+    }
+    client.post("/auth/register", json=payload)
+    login_resp = client.post("/auth/login", json={
+        "email": payload["email"],
+        "password": payload["password"]
+    })
+    token = login_resp.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
