@@ -143,17 +143,17 @@ def update_product(
     update_data = data.model_dump(exclude_unset=True, exclude={"category_id"})
     for key, value in update_data.items():
         setattr(product, key, value)
-        try:
-            db.commit()
-            db.refresh(product)
-        except Exception as e:
-            db.rollback()
-            print(f"Error update:{e}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Internal server error"
-            )
-        return product
+    try:
+        db.commit()
+        db.refresh(product)
+    except Exception as e:
+        db.rollback()
+        print(f"Error update:{e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error"
+        )
+    return product
 
 @router.delete("/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_product(

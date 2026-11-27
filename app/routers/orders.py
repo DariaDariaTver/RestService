@@ -64,18 +64,18 @@ def create_order(data: OrderCreate,
                 )
             subtotal += item.product.price * item.quantity
             
-            new_order = Order(
-            user_id=current_user.id,
-            status_id=order_status.id,
-            address_id=address.id,
-            payment_method_id=payment_method.id,
-            comment=data.comment,
-            subtotal=subtotal,
-            delivery_price=DELIVERY_PRICE,
-            total_price=subtotal + DELIVERY_PRICE,)
+        new_order = Order(
+        user_id=current_user.id,
+        status_id=order_status.id,
+        address_id=address.id,
+        payment_method_id=payment_method.id,
+        comment=data.comment,
+        subtotal=subtotal,
+        delivery_price=DELIVERY_PRICE,
+        total_price=subtotal + DELIVERY_PRICE,)
             
-            db.add(new_order)
-            db.flush()
+        db.add(new_order)
+        db.flush()
 
         for item in cart.items:
             order_item = OrderItem(
@@ -87,7 +87,8 @@ def create_order(data: OrderCreate,
             db.add(order_item)
             db.delete(item)
 
-            db.commit()
+        db.commit()
+        db.refresh(new_order)
     except HTTPException:
         db.rollback()
         raise
